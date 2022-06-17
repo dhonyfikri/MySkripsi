@@ -23,12 +23,14 @@ import LoadingProcessFull from './LoadingProcessFull';
 import ModalMessage from './ModalMessage';
 import Divider from './Divider';
 import CardReply from './CardReply';
+import {height} from 'styled-system';
 
 const CardContentNew = ({
   userToken,
   ideaId,
   creatorId,
   creatorName,
+  creatorPictures,
   title,
   description,
   likes,
@@ -182,7 +184,21 @@ const CardContentNew = ({
             marginRight: 8,
           }}
           onPress={() => onCreatorPress(creatorId)}>
-          <InitialIcon width={36} height={36} name={creatorName} />
+          <View
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 36 / 2,
+              overflow: 'hidden',
+            }}>
+            <View style={{position: 'absolute', left: 0, top: 0}}>
+              <InitialIcon width={36} height={36} name={creatorName} />
+            </View>
+            <Image
+              source={creatorPictures}
+              style={{width: '100%', height: '100%', resizeMode: 'cover'}}
+            />
+          </View>
           <Gap width={8} />
           <Text
             numberOfLines={1}
@@ -280,20 +296,45 @@ const CardContentNew = ({
               }}>
               {likeList.slice(-3).map((likeItem, index) => {
                 return (
-                  <InitialIcon
-                    key={index.toString()}
-                    width={26}
-                    height={26}
-                    marginLeft={index === 0 ? 0 : -5}
-                    name={
-                      listUser
-                        .map(
-                          userItem =>
-                            userItem.id === likeItem.createdBy && userItem.name,
-                        )
-                        .filter(item => item !== false)[0]
-                    }
-                  />
+                  <>
+                    <View
+                      key={index.toString()}
+                      style={{
+                        width: 26,
+                        height: 26,
+                        borderRadius: 26 / 2,
+                        overflow: 'hidden',
+                        marginLeft: index === 0 ? 0 : -5,
+                      }}>
+                      <View style={{position: 'absolute'}}>
+                        <InitialIcon
+                          width={26}
+                          height={26}
+                          name={
+                            listUser
+                              .map(
+                                userItem =>
+                                  userItem.id === likeItem.createdBy &&
+                                  userItem.name,
+                              )
+                              .filter(item => item !== false)[0]
+                          }
+                        />
+                      </View>
+                      <Image
+                        source={
+                          listUser.filter(
+                            item => item.id === likeItem.createdBy,
+                          )[0]?.pictures
+                        }
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          resizeMode: 'cover',
+                        }}
+                      />
+                    </View>
+                  </>
                 );
               })}
               {likeList.length > 3 && (
@@ -402,7 +443,24 @@ const CardContentNew = ({
             alignItems: 'flex-start',
             flex: 1,
           }}>
-          <InitialIcon width={26} height={26} name={decodedJwt.data.name} />
+          <View
+            style={{
+              width: 26,
+              height: 26,
+              borderRadius: 26 / 2,
+              overflow: 'hidden',
+            }}>
+            <View style={{position: 'absolute'}}>
+              <InitialIcon width={26} height={26} name={decodedJwt.data.name} />
+            </View>
+            <Image
+              source={
+                listUser.filter(item => item.id === decodedJwt.data.id)[0]
+                  ?.pictures
+              }
+              style={{width: '100%', height: '100%', resizeMode: 'cover'}}
+            />
+          </View>
           <Gap width={8} />
           <TextInput
             placeholder="Add Comment..."

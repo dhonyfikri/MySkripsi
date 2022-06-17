@@ -5,6 +5,7 @@ import {EditAboutAPI} from '../config/RequestAPI/UserAPI';
 import {colors} from '../utils/ColorsConfig/Colors';
 import fonts from '../utils/FontsConfig/Fonts';
 import Gap from './Gap';
+import LoadingProcessFull from './LoadingProcessFull';
 import ModalMessage from './ModalMessage';
 
 const EditMyAbout = ({
@@ -97,6 +98,8 @@ const EditMyAbout = ({
         onDiscardPress={() => discard()}
         onSavePress={() => handleEditAbout()}
       />
+
+      <LoadingProcessFull visible={loading.visible} message={loading.message} />
 
       {/* modal discard confirmation message */}
       <ModalMessage

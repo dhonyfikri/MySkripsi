@@ -1,28 +1,30 @@
-import React, {useState, useEffect, useRef} from 'react';
+import {useIsFocused} from '@react-navigation/native';
+import jwtDecode from 'jwt-decode';
+import React, {useEffect, useRef, useState} from 'react';
 import {
+  Animated,
+  Image,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  ActivityIndicator,
-  Image,
-  RefreshControl,
-  Animated,
 } from 'react-native';
 import CardProfileMainContent from '../../../components/CardProfileMainContent';
 import ContactDetail from '../../../components/ContactDetail';
 import Gap from '../../../components/Gap';
 import ModalEditProfile from '../../../components/ModalEditProfile';
 import ProfileOptionItem from '../../../components/ProfileOptionItem';
+import RefreshFull from '../../../components/RefreshFull';
+import {GetIdeasAPI} from '../../../config/RequestAPI/IdeaAPI';
+import {GetUserById} from '../../../config/RequestAPI/UserAPI';
+import {
+  getAsyncStorageObject,
+  removeAsyncStorageItem,
+} from '../../../utils/AsyncStorage/StoreAsyncStorage';
 import {colors} from '../../../utils/ColorsConfig/Colors';
 import fonts from '../../../utils/FontsConfig/Fonts';
-import {useIsFocused} from '@react-navigation/native';
-import {removeAsyncStorageItem} from '../../../utils/AsyncStorage/StoreAsyncStorage';
-import jwtDecode from 'jwt-decode';
-import RefreshFull from '../../../components/RefreshFull';
-import {GetUserById} from '../../../config/RequestAPI/UserAPI';
-import {GetIdeasAPI} from '../../../config/RequestAPI/IdeaAPI';
 
 const Profile = ({navigation, route}) => {
   const decodedJwt = route.params?.userToken
@@ -63,20 +65,28 @@ const Profile = ({navigation, route}) => {
 
   const fetchUserData = () => {
     setLoading(true);
-    GetUserById(route.params?.userToken, decodedJwt.data.id).then(res => {
-      setLoading(false);
-      if (res.status === 'SUCCESS') {
-        if (res.data.length > 0) {
-          setProfileData(res.data[0]);
-          fetchIdeas(true);
+    getAsyncStorageObject('@PELENGKAP_DATA_USER').then(resPelengkapDataUser => {
+      GetUserById(route.params?.userToken, decodedJwt.data.id).then(res => {
+        setLoading(false);
+        if (res.status === 'SUCCESS') {
+          if (res.data.length > 0) {
+            setProfileData({
+              ...res.data[0],
+              ...resPelengkapDataUser?.filter(
+                item => item.id === res.data[0].id,
+              )[0],
+              bio: res.data[0]?.bio,
+            });
+            fetchIdeas(true);
+          }
+        } else if (
+          res.status === 'SOMETHING_WRONG' ||
+          res.status === 'FAILED' ||
+          res.status === 'SERVER_ERROR'
+        ) {
+          setShowRefreshButton(true);
         }
-      } else if (
-        res.status === 'SOMETHING_WRONG' ||
-        res.status === 'FAILED' ||
-        res.status === 'SERVER_ERROR'
-      ) {
-        setShowRefreshButton(true);
-      }
+      });
     });
   };
 
@@ -287,7 +297,7 @@ const Profile = ({navigation, route}) => {
             <>
               <Gap height={16} />
               <ProfileOptionItem
-                title="My Ideas"
+                title="Administrations"
                 multiItems
                 multiData={[
                   {
@@ -327,7 +337,12 @@ const Profile = ({navigation, route}) => {
             title="General Info"
             singleData={{
               itemTitle: 'FAQ',
-              onPress: () => console.log('FAQ Clicked'),
+              // onPress: () => console.log('FAQ Clicked'),
+              onPress: () => {
+                getAsyncStorageObject('@PELENGKAP_DATA_USER').then(res =>
+                  console.log(res),
+                );
+              },
             }}
           />
           <Gap height={32} />

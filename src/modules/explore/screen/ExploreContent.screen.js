@@ -20,6 +20,7 @@ import CardContentNew from '../../../components/CardContentNew';
 import ModalMessage from '../../../components/ModalMessage';
 import {ApiGatewayBaseUrl} from '../../../config/Environment.cfg';
 import {GetIdeasAPI} from '../../../config/RequestAPI/IdeaAPI';
+import {getAsyncStorageObject} from '../../../utils/AsyncStorage/StoreAsyncStorage';
 import {colors} from '../../../utils/ColorsConfig/Colors';
 import fonts from '../../../utils/FontsConfig/Fonts';
 import styles from '../style/Explore.style';
@@ -99,35 +100,46 @@ const ExploreContent = ({navigation, route}) => {
           listGetUserRequest.push(request(item));
         });
 
-        axios
-          .all(listGetUserRequest)
-          .then(
-            axios.spread((...responses) => {
-              setFetchLoading(false);
-              responses.map(item => {
-                if (item.data.data.length > 0) {
-                  listUser.push(item.data.data[0]);
-                }
+        getAsyncStorageObject('@PELENGKAP_DATA_USER').then(
+          resPelengkapDataUser => {
+            axios
+              .all(listGetUserRequest)
+              .then(
+                axios.spread((...responses) => {
+                  setFetchLoading(false);
+                  responses.map(item => {
+                    if (item.data.data.length > 0) {
+                      listUser.push({
+                        ...item.data.data[0],
+                        ...resPelengkapDataUser?.filter(
+                          itemPelengkap =>
+                            itemPelengkap.id === item.data.data[0].id,
+                        )[0],
+                        bio: item.data.data[0]?.bio,
+                      });
+                    }
+                  });
+                  // console.log(listUser);
+                  res.data.map(item => {
+                    const tempItem = item;
+                    listUser.map(item => {
+                      if (item.id === tempItem.createdBy) {
+                        tempItem.user = item;
+                      }
+                    });
+                    fixResult.push(tempItem);
+                  });
+                  setData({isSet: true, data: fixResult});
+                  setListUserData(listUser);
+                }),
+              )
+              .catch(errors => {
+                setFetchLoading(false);
+                console.log(errors);
+                setData({...data, isSet: true});
               });
-              // console.log(listUser);
-              res.data.map(item => {
-                const tempItem = item;
-                listUser.map(item => {
-                  if (item.id === tempItem.createdBy) {
-                    tempItem.user = item;
-                  }
-                });
-                fixResult.push(tempItem);
-              });
-              setData({isSet: true, data: fixResult});
-              setListUserData(listUser);
-            }),
-          )
-          .catch(errors => {
-            setFetchLoading(false);
-            console.log(errors);
-            setData({...data, isSet: true});
-          });
+          },
+        );
 
         // setData({isSet: true, data: res.data});
       } else if (
@@ -935,6 +947,7 @@ const ExploreContent = ({navigation, route}) => {
                       return a.toUpperCase();
                     },
                   )}
+                  creatorPictures={item.user?.pictures}
                   listUser={listUserData}
                   title={item.desc[0].value}
                   description={item.desc[1].value}

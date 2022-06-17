@@ -23,6 +23,12 @@ import Gap from './Gap';
 import ModalMessage from './ModalMessage';
 import EditActionButton from './EditActionButton';
 import {InitialIcon} from './InitialIcon';
+import {
+  TeamStructureData,
+  UnitData,
+  WorkingLocationData,
+} from '../utils/SupportData/SupportData';
+import _ from 'lodash';
 
 const EditMyProfile = ({
   openModalDiscardReff,
@@ -47,31 +53,22 @@ const EditMyProfile = ({
   const [valueDropdownWorkingLocation, setValueDropdownWorkingLocation] =
     useState(profileData.workingLocation);
   const [itemsDropdownWorkingLocation, setItemsDropdownWorkingLocation] =
-    useState([
-      {label: 'Tangerang', value: 'Tangerang'},
-      {label: 'Jakarta', value: 'Jakarta'},
-      {label: 'Bekasi', value: 'Bekasi'},
-    ]);
+    useState(_.cloneDeep(WorkingLocationData));
 
   const [openDropdownTeamStructure, setOpenDropdownTeamStructure] =
     useState(false);
   const [valueDropdownTeamStructure, setValueDropdownTeamStructure] = useState(
     profileData.teamStructure,
   );
-  const [itemsDropdownTeamStructure, setItemsDropdownTeamStructure] = useState([
-    {label: 'Hipster', value: 'Hipster'},
-    {label: 'Hustler', value: 'Hustler'},
-    {label: 'Hacker', value: 'Hacker'},
-  ]);
+  const [itemsDropdownTeamStructure, setItemsDropdownTeamStructure] = useState(
+    _.cloneDeep(TeamStructureData),
+  );
 
   const [openDropdownUnit, setOpenDropdownUnit] = useState(false);
   const [valueDropdownUnit, setValueDropdownUnit] = useState(profileData.unit);
-  const [itemsDropdownUnit, setItemsDropdownUnit] = useState([
-    {label: 'IdeaBox1', value: 'Ideabox1'},
-    {label: 'IdeaBox2', value: 'Ideabox2'},
-    {label: 'IdeaBox3', value: 'Ideabox3'},
-    {label: 'IdeaBox4', value: 'Ideabox4'},
-  ]);
+  const [itemsDropdownUnit, setItemsDropdownUnit] = useState(
+    _.cloneDeep(UnitData),
+  );
 
   const takeProfilePhotoFromLibrary = () => {
     ImageCropPicker.openPicker({

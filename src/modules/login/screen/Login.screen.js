@@ -2,6 +2,7 @@ import CheckBox from '@react-native-community/checkbox';
 import React, {useState} from 'react';
 import {
   Image,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -78,6 +79,7 @@ const Login = ({navigation, route}) => {
 
   return (
     <View style={styles.container}>
+      <StatusBar backgroundColor={colors.white} barStyle="dark-content" />
       <View style={{alignItems: 'center'}}>
         <Image
           source={require('../../../assets/image/logo-ideabox.png')}

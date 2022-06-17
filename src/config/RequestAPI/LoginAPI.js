@@ -26,7 +26,7 @@ const LoginAPI = (email, password, rememberMe) => {
         }
       })
       .catch(error => {
-        // console.log(error.response.status);
+        console.log(error);
         if (error.response?.status === 404) {
           resolve({
             status: 'USER_NOT_FOUND',

@@ -17,6 +17,7 @@ const CardProfile = ({
         return a.toUpperCase();
       })
     : '-';
+
   return (
     <View style={styles.container}>
       <TouchableOpacity
@@ -26,12 +27,26 @@ const CardProfile = ({
           alignItems: 'center',
         }}
         onPress={onCreatorPress}>
-        <InitialIcon
-          width={50}
-          height={50}
-          name={userData?.name}
-          fontSize={20}
-        />
+        <View
+          style={{
+            width: 50,
+            height: 50,
+            borderRadius: 50 / 2,
+            overflow: 'hidden',
+          }}>
+          <View style={{position: 'absolute', left: 0, top: 0}}>
+            <InitialIcon
+              width={50}
+              height={50}
+              name={userData?.name}
+              fontSize={20}
+            />
+          </View>
+          <Image
+            source={userData?.pictures}
+            style={{width: '100%', height: '100%', resizeMode: 'cover'}}
+          />
+        </View>
         <Gap width={10} />
         <View style={styles.detailWrapper}>
           <Text numberOfLines={2} ellipsizeMode="tail" style={styles.nameText}>

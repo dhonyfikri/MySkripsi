@@ -20,11 +20,15 @@ import Gap from '../../../components/Gap';
 import Header from '../../../components/Header';
 import LoadingProcessFull from '../../../components/LoadingProcessFull';
 import ModalEditProfile from '../../../components/ModalEditProfile';
-import ModalMessage from '../../../components/ModalMessage';
 import RefreshFull from '../../../components/RefreshFull';
 import {GetUserById} from '../../../config/RequestAPI/UserAPI';
+import {
+  getAsyncStorageObject,
+  storeAsyncStorageObject,
+} from '../../../utils/AsyncStorage/StoreAsyncStorage';
 import {colors} from '../../../utils/ColorsConfig/Colors';
 import fonts from '../../../utils/FontsConfig/Fonts';
+import {RecomendationSkills} from '../../../utils/SupportData/SupportData';
 
 const MyProfile = ({navigation, route}) => {
   const editableProfile =
@@ -37,8 +41,6 @@ const MyProfile = ({navigation, route}) => {
   const openModalDiscardAddAchievementReff = useRef(null);
   const openModalDiscardEditAchievementReff = useRef(null);
 
-  const [mySkills, setMySkills] = useState([]);
-  const [myAchivements, setMyAchivements] = useState([]);
   const [profileData, setProfileData] = useState(
     route.params?.existingProfileData !== undefined
       ? route.params?.existingProfileData
@@ -89,7 +91,17 @@ const MyProfile = ({navigation, route}) => {
       setLoading({...loading, visible: false});
       if (res.status === 'SUCCESS') {
         if (res.data.length > 0) {
-          setProfileData(res.data[0]);
+          getAsyncStorageObject('@PELENGKAP_DATA_USER').then(
+            resPelengkapDataUser => {
+              setProfileData({
+                ...res.data[0],
+                ...resPelengkapDataUser?.filter(
+                  item => item.id === res.data[0].id,
+                )[0],
+                bio: res.data[0]?.bio,
+              });
+            },
+          );
         }
       } else if (
         res.status === 'SOMETHING_WRONG' ||
@@ -129,27 +141,6 @@ const MyProfile = ({navigation, route}) => {
       navigation.replace('TabNavigation');
     }
   };
-
-  useEffect(() => {
-    setMySkills([
-      'UI/UX Designer',
-      'Product Owner',
-      'Digital Marketing',
-      'System Analyst',
-    ]);
-    setMyAchivements([
-      {
-        title: 'Sistem Keuangan Berbasis Web untuk UMKM',
-        desc: 'Top 25 Ideahack -',
-        date: '25/11/2014',
-      },
-      {
-        title: 'Indonesia Menerapkan IoT',
-        desc: 'Juara Harapan 2 Ideahack',
-        date: '18/03/2016',
-      },
-    ]);
-  }, []);
 
   useEffect(() => {
     if (profileData.id === undefined) {
@@ -219,20 +210,20 @@ const MyProfile = ({navigation, route}) => {
             editable={editableProfile}
             title="My Skills"
             withAddButton
-            withEditButton={mySkills.length > 0}
+            withEditButton={profileData.skills?.length > 0}
             onAddPress={() => setModalAddSkillsVisible(true)}
             onEditPress={() => setModalEditSkillsVisible(true)}>
-            <CardMySkills skills={mySkills} />
+            <CardMySkills skills={profileData.skills} />
           </CardDetailProfileContent>
           <Gap height={16} />
           <CardDetailProfileContent
             editable={editableProfile}
             title="Achievement"
             withAddButton
-            withEditButton={myAchivements.length > 0}
+            withEditButton={profileData.achievements?.length > 0}
             onAddPress={() => setModalAddAchievemensVisible(true)}
             onEditPress={() => setModalActionAchievemensVisible(true)}>
-            <CardMyAchivements achievement={myAchivements} />
+            <CardMyAchivements achievement={profileData.achievements} />
           </CardDetailProfileContent>
           <Gap height={16} />
           <CardDetailProfileContent
@@ -257,12 +248,24 @@ const MyProfile = ({navigation, route}) => {
           openModalDiscardReff={openModalDiscardEditBackgroundPhotoReff}
           backgroundPhoto={profileData.background}
           onSavePress={newBackgroundPhoto => {
-            setModalEditBackgroundPhotoVisible(false);
-            setProfileData({
-              ...profileData,
-              background: newBackgroundPhoto,
+            getAsyncStorageObject('@PELENGKAP_DATA_USER').then(res => {
+              let data = {
+                ...profileData,
+                background: newBackgroundPhoto,
+              };
+              storeAsyncStorageObject(
+                '@PELENGKAP_DATA_USER',
+                res
+                  ? res
+                      .filter(item => item.id !== profileData.id)
+                      .concat([data])
+                  : [data],
+              ).then(() => {
+                setProfileData(data);
+                setModalEditBackgroundPhotoVisible(false);
+                setChanged();
+              });
             });
-            setChanged();
           }}
           onDiscardPress={() => setModalEditBackgroundPhotoVisible(false)}
         />
@@ -278,21 +281,34 @@ const MyProfile = ({navigation, route}) => {
           openModalDiscardReff={openModalDiscardEditProfileReff}
           profileData={profileData}
           onSavePress={(newProfileData, photoProfileChanged) => {
-            if (photoProfileChanged) {
-              //with update photo
-              console.log('with update photo');
-              setProfileData(newProfileData);
-            } else {
-              //without update photo
-              console.log('without update photo');
-              setProfileData({
-                ...profileData,
-                ...newProfileData,
-                pictures: profileData.profilePhoto,
+            getAsyncStorageObject('@PELENGKAP_DATA_USER').then(res => {
+              let data = null;
+              if (photoProfileChanged) {
+                //with update photo
+                console.log('with update photo');
+                data = newProfileData;
+              } else {
+                //without update photo
+                console.log('without update photo');
+                data = {
+                  ...profileData,
+                  ...newProfileData,
+                  pictures: profileData.pictures,
+                };
+              }
+              storeAsyncStorageObject(
+                '@PELENGKAP_DATA_USER',
+                res
+                  ? res
+                      .filter(item => item.id !== profileData.id)
+                      .concat([data])
+                  : [data],
+              ).then(() => {
+                setProfileData(data);
+                setModalEditProfileVisible(false);
+                setChanged();
               });
-            }
-            setModalEditProfileVisible(false);
-            setChanged();
+            });
           }}
           onDiscardPress={() => setModalEditProfileVisible(false)}
         />
@@ -337,17 +353,32 @@ const MyProfile = ({navigation, route}) => {
         onCloseButtonPress={() => openModalDiscardAddSkillReff.current()}>
         <AddMySkills
           openModalDiscardReff={openModalDiscardAddSkillReff}
-          recomendationSkills={[
-            'Web Design',
-            'Data Representation',
-            'Prototyping',
-            'Control Systems Design',
-          ]}
-          mySkills={mySkills}
+          recomendationSkills={RecomendationSkills}
+          mySkills={profileData.skills}
           onSavePress={newSkills => {
-            const oldSkills = [...mySkills];
-            setMySkills([...new Set([...oldSkills, ...newSkills])]);
-            setModalAddSkillsVisible(false);
+            getAsyncStorageObject('@PELENGKAP_DATA_USER').then(res => {
+              let data = {
+                ...profileData,
+                skills: [
+                  ...new Set([
+                    ...(profileData.skills ? profileData.skills : []),
+                    ...newSkills,
+                  ]),
+                ],
+              };
+              storeAsyncStorageObject(
+                '@PELENGKAP_DATA_USER',
+                res
+                  ? res
+                      .filter(item => item.id !== profileData.id)
+                      .concat([data])
+                  : [data],
+              ).then(() => {
+                setProfileData(data);
+                setModalAddSkillsVisible(false);
+                setChanged();
+              });
+            });
           }}
           onDiscardPress={() => setModalAddSkillsVisible(false)}
         />
@@ -361,10 +392,26 @@ const MyProfile = ({navigation, route}) => {
         onCloseButtonPress={() => openModalDiscardEditSkillReff.current()}>
         <EditMySkills
           openModalDiscardReff={openModalDiscardEditSkillReff}
-          skills={mySkills}
+          skills={profileData.skills}
           onSavePress={newSkills => {
-            setModalEditSkillsVisible(false);
-            setMySkills(newSkills);
+            getAsyncStorageObject('@PELENGKAP_DATA_USER').then(res => {
+              let data = {
+                ...profileData,
+                skills: newSkills,
+              };
+              storeAsyncStorageObject(
+                '@PELENGKAP_DATA_USER',
+                res
+                  ? res
+                      .filter(item => item.id !== profileData.id)
+                      .concat([data])
+                  : [data],
+              ).then(() => {
+                setProfileData(data);
+                setModalEditSkillsVisible(false);
+                setChanged();
+              });
+            });
           }}
           onDiscardPress={() => setModalEditSkillsVisible(false)}
         />
@@ -380,10 +427,26 @@ const MyProfile = ({navigation, route}) => {
           openModalDiscardReff={openModalDiscardAddAchievementReff}
           onDiscardPress={() => setModalAddAchievemensVisible(false)}
           onSavePress={newAchievements => {
-            setModalAddAchievemensVisible(false);
-            const tempAchievements = [...myAchivements];
-            tempAchievements.push(newAchievements);
-            setMyAchivements(tempAchievements);
+            getAsyncStorageObject('@PELENGKAP_DATA_USER').then(res => {
+              let data = {
+                ...profileData,
+                achievements: profileData.achievements
+                  ? profileData.achievements.concat([newAchievements])
+                  : [newAchievements],
+              };
+              storeAsyncStorageObject(
+                '@PELENGKAP_DATA_USER',
+                res
+                  ? res
+                      .filter(item => item.id !== profileData.id)
+                      .concat([data])
+                  : [data],
+              ).then(() => {
+                setProfileData(data);
+                setModalAddAchievemensVisible(false);
+                setChanged();
+              });
+            });
           }}
         />
       </ModalEditProfile>
@@ -395,19 +458,35 @@ const MyProfile = ({navigation, route}) => {
         onRequestClose={() => setModalActionAchievemensVisible(false)}
         onCloseButtonPress={() => setModalActionAchievemensVisible(false)}>
         <ActionMyAchievements
-          achievements={myAchivements}
+          achievements={profileData.achievements}
           onItemEdit={achievementIndexToEdit => {
             setModalActionAchievemensVisible(false);
             setAchievementIndexToEdit(achievementIndexToEdit);
             setModalEditAchievemensVisible(true);
           }}
           onItemDelete={achievementIndexToDelete => {
-            if (myAchivements.length <= 1) {
-              setModalActionAchievemensVisible(false);
-            }
-            const tempMyAchievements = [...myAchivements];
+            const tempMyAchievements = [...profileData.achievements];
             tempMyAchievements.splice(achievementIndexToDelete, 1);
-            setMyAchivements(tempMyAchievements);
+            getAsyncStorageObject('@PELENGKAP_DATA_USER').then(res => {
+              let data = {
+                ...profileData,
+                achievements: tempMyAchievements,
+              };
+              storeAsyncStorageObject(
+                '@PELENGKAP_DATA_USER',
+                res
+                  ? res
+                      .filter(item => item.id !== profileData.id)
+                      .concat([data])
+                  : [data],
+              ).then(() => {
+                if (profileData.achievements?.length <= 1) {
+                  setModalActionAchievemensVisible(false);
+                }
+                setProfileData(data);
+                setChanged();
+              });
+            });
           }}
         />
       </ModalEditProfile>
@@ -422,17 +501,37 @@ const MyProfile = ({navigation, route}) => {
         }>
         <EditMyAchievements
           openModalDiscardReff={openModalDiscardEditAchievementReff}
-          achievementsToEdit={myAchivements[achievementIndexToEdit]}
+          achievementsToEdit={
+            profileData.achievements?.[achievementIndexToEdit]
+          }
           onDiscardPress={() => {
             setModalEditAchievemensVisible(false);
             setModalActionAchievemensVisible(true);
           }}
           onSavePress={editedAchievementItem => {
             setModalEditAchievemensVisible(false);
-            const tempAchievements = [...myAchivements];
+
+            const tempAchievements = [...profileData.achievements];
             tempAchievements[achievementIndexToEdit] = editedAchievementItem;
-            setMyAchivements(tempAchievements);
-            setModalActionAchievemensVisible(true);
+
+            getAsyncStorageObject('@PELENGKAP_DATA_USER').then(res => {
+              let data = {
+                ...profileData,
+                achievements: tempAchievements,
+              };
+              storeAsyncStorageObject(
+                '@PELENGKAP_DATA_USER',
+                res
+                  ? res
+                      .filter(item => item.id !== profileData.id)
+                      .concat([data])
+                  : [data],
+              ).then(() => {
+                setModalActionAchievemensVisible(true);
+                setProfileData(data);
+                setChanged();
+              });
+            });
           }}
         />
       </ModalEditProfile>

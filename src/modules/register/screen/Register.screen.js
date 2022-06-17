@@ -4,6 +4,7 @@ import {
   Image,
   SafeAreaView,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -109,6 +110,7 @@ export default function RegisterScreen({navigation, route}) {
 
   return (
     <SafeAreaView style={styles.containerSafe}>
+      <StatusBar backgroundColor={colors.secondary} barStyle="dark-content" />
       <Header
         backButton
         onBackPress={() => navigation.goBack()}
@@ -195,7 +197,9 @@ export default function RegisterScreen({navigation, route}) {
             />
             <Text style={styles.termCondition}>
               I have read & accept the{' '}
-              <Text style={{color: '#5F49D2', fontFamily: 'Poppins-SemiBold'}}>
+              <Text
+                style={{color: '#5F49D2', fontFamily: 'Poppins-SemiBold'}}
+                onPress={() => navigation.navigate('TermCondi')}>
                 Terms & Conditions
               </Text>
             </Text>
