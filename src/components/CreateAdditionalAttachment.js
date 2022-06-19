@@ -58,7 +58,15 @@ const CreateAdditionalAttachment = ({
   }, [attachment]);
 
   useEffect(() => {
-    const newFileAttachment = [];
+    const newFileAttachment = attachment
+      .filter(item => item.type === 'File')
+      .map(item => {
+        return {
+          name: item.desc,
+          extension: item.documentName.split('.')?.slice(-1)[0],
+          link: item.documentName,
+        };
+      });
     const newLinkAttachment = attachment
       .filter(item => item.type === 'Link')
       .map(item => {
@@ -77,7 +85,7 @@ const CreateAdditionalAttachment = ({
           onNextRequest(newFileAttachment, newLinkAttachment);
       }
     }
-  });
+  }, [attachment]);
 
   return (
     <CardCreateIdeaSession

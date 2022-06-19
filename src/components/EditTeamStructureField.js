@@ -78,7 +78,8 @@ const EditTeamStructureField = ({
       <Gap height={16} />
       <EditActionButton
         disableSaveButton={
-          name.trim().length <= 0 || valueDropdownTeamStructure === null
+          // name?.trim().length <= 0 ||
+          valueDropdownTeamStructure === null
         }
         onDiscardPress={onDiscardPress}
         onSavePress={() => {

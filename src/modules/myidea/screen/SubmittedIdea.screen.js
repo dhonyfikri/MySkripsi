@@ -18,7 +18,7 @@ import Gap from '../../../components/Gap';
 import Header from '../../../components/Header';
 import ModalAction from '../../../components/ModalAction';
 import {colors} from '../../../utils/ColorsConfig/Colors';
-import {textToDate} from '../../../utils/DateConfig/DateConvert';
+import {dateToText, textToDate} from '../../../utils/DateConfig/DateConvert';
 import fonts from '../../../utils/FontsConfig/Fonts';
 import ModalMessage from '../../../components/ModalMessage';
 import LoadingProcessFull from '../../../components/LoadingProcessFull';
@@ -28,6 +28,10 @@ import axios from 'axios';
 import jwtDecode from 'jwt-decode';
 import {ApiGatewayBaseUrl} from '../../../config/Environment.cfg';
 import {useBackHandler} from '@react-native-community/hooks';
+import {
+  getAsyncStorageObject,
+  storeAsyncStorageObject,
+} from '../../../utils/AsyncStorage/StoreAsyncStorage';
 
 const SubmittedIdea = ({navigation, route}) => {
   const decodedJwt = jwtDecode(route.params?.userToken.authToken);
@@ -82,13 +86,14 @@ const SubmittedIdea = ({navigation, route}) => {
           item.comment.map(item => {
             uniqueUserId.push(item.createdBy);
           });
-          uniqueUserId.push(
-            jwtDecode(route.params?.userToken?.authToken).data.id,
-          );
         });
+        uniqueUserId.push(
+          jwtDecode(route.params?.userToken?.authToken).data.id,
+        );
         if (res.data.length > 0) {
           uniqueUserId = [...new Set(uniqueUserId)];
         }
+
         const request = userId => {
           return axios.get(`${ApiGatewayBaseUrl}/users/profile/${userId}`, {
             headers: {
@@ -108,51 +113,79 @@ const SubmittedIdea = ({navigation, route}) => {
           listGetUserRequest.push(request(item));
         });
 
-        axios
-          .all(listGetUserRequest)
-          .then(
-            axios.spread((...responses) => {
-              responses.map(item => {
-                if (item.data.data.length > 0) {
-                  listUser.push(item.data.data[0]);
-                }
-              });
-              // console.log(listUser);
-              res.data.map(item => {
-                const tempItem = item;
-                listUser.map(item => {
-                  if (item.id === tempItem.createdBy) {
-                    tempItem.user = item;
-                  }
-                });
-                fixResult.push(tempItem);
-              });
-              setIdeaDataList(fixResult);
-              let fixSubmittedIdea = [];
-              fixResult
-                .filter(item => item.createdBy === decodedJwt.data.id)
-                .map(item => {
-                  fixSubmittedIdea.push({
-                    ideaId: item.id,
-                    ideaName: item.desc[0].value,
-                    allowJoin: item.allowJoin,
-                    ownerId: item.createdBy,
-                    ownerName: item.user.name,
-                    createdDate: `${
-                      (item.desc[0].value.length % 29) + 1
-                    }/05/2022, 12:00:01`,
+        getAsyncStorageObject('@PELENGKAP_DATA_USER').then(
+          resPelengkapDataUser => {
+            axios
+              .all(listGetUserRequest)
+              .then(
+                axios.spread((...responses) => {
+                  responses.map(item => {
+                    if (item.data.data.length > 0) {
+                      listUser.push({
+                        ...item.data.data[0],
+                        ...resPelengkapDataUser?.filter(
+                          itemPelengkap =>
+                            itemPelengkap.id === item.data.data[0].id,
+                        )[0],
+                        bio: item.data.data[0]?.bio,
+                      });
+                    }
                   });
-                });
-              setSubmittedIdea(fixSubmittedIdea);
-              setListUserData(listUser);
-              setLoading({...loading, visible: false});
-            }),
-          )
-          .catch(errors => {
-            setLoading({...loading, visible: false});
-            setShowRefreshButton(true);
-            console.log(errors);
-          });
+                  // console.log(listUser);
+                  getAsyncStorageObject('@PELENGKAP_DATA_IDEA').then(
+                    dataPelengkapIdea => {
+                      res.data.map(item => {
+                        const dataPasanganPelengkap = dataPelengkapIdea.filter(
+                          itemPasangan =>
+                            itemPasangan.ideaId.toString() === item.id,
+                        )[0];
+                        let tempItem = item;
+                        if (dataPasanganPelengkap) {
+                          tempItem.desc[2].value = dataPasanganPelengkap.cover;
+                          tempItem = {
+                            ...tempItem,
+                            teams: dataPasanganPelengkap.teams,
+                            createdDate: dataPasanganPelengkap.createdDate,
+                            updatedDate: dataPasanganPelengkap.updatedDate,
+                          };
+                        }
+                        listUser.map(item => {
+                          if (item.id === tempItem.createdBy) {
+                            tempItem.user = item;
+                          }
+                        });
+                        fixResult.push(tempItem);
+                      });
+                      setIdeaDataList(fixResult);
+                      let fixSubmittedIdea = [];
+                      fixResult
+                        .filter(item => item.createdBy === decodedJwt.data.id)
+                        .map(item => {
+                          fixSubmittedIdea.push({
+                            ideaId: item.id,
+                            ideaName: item.desc[0].value,
+                            allowJoin: item.allowJoin,
+                            ownerId: item.createdBy,
+                            ownerName: item.user.name,
+                            createdDate: dateToText(
+                              textToDate(item.createdDate, 'dash'),
+                            ),
+                          });
+                        });
+                      setSubmittedIdea(fixSubmittedIdea);
+                      setListUserData(listUser);
+                      setLoading({...loading, visible: false});
+                    },
+                  );
+                }),
+              )
+              .catch(errors => {
+                setLoading({...loading, visible: false});
+                setShowRefreshButton(true);
+                console.log(errors);
+              });
+          },
+        );
       } else if (
         res.status === 'SOMETHING_WRONG' ||
         res.status === 'NOT_FOUND' ||
@@ -175,11 +208,22 @@ const SubmittedIdea = ({navigation, route}) => {
       setLoading({...loading, visible: false});
       console.log(res);
       if (res.status === 'SUCCESS') {
-        setModalDeleteIdeaVisible(false);
-        setSelectedIdea(null);
-        setDeleteIdeaMessage('');
-        setMessageSuccessDeleteIdeaModalVisible(true);
-        setChanged();
+        getAsyncStorageObject('@PELENGKAP_DATA_IDEA').then(
+          dataPelengkapIdea => {
+            storeAsyncStorageObject(
+              '@PELENGKAP_DATA_IDEA',
+              dataPelengkapIdea.filter(
+                item => item.ideaId !== selectedIdea.ideaId,
+              ),
+            ).then(() => {
+              setModalDeleteIdeaVisible(false);
+              setSelectedIdea(null);
+              setDeleteIdeaMessage('');
+              setMessageSuccessDeleteIdeaModalVisible(true);
+              setChanged();
+            });
+          },
+        );
       } else if (
         res.status === 'SOMETHING_WRONG' ||
         res.status === 'ERROR' ||
@@ -407,6 +451,7 @@ const SubmittedIdea = ({navigation, route}) => {
                   allowJoin: selectedIdea.allowJoin,
                   userToken: route.params?.userToken,
                   ideaDataList: ideaDataList,
+                  listUserData: listUserData,
                 });
               }}>
               <Text style={styles.buttonText('normal')}>Edit Idea</Text>
@@ -421,6 +466,7 @@ const SubmittedIdea = ({navigation, route}) => {
                   allowJoin: selectedIdea.allowJoin,
                   userToken: route.params?.userToken,
                   ideaDataList: ideaDataList,
+                  listUserData: listUserData,
                   indexSection: 3,
                 });
               }}>

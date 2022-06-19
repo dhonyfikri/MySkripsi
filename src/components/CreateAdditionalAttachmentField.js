@@ -36,10 +36,11 @@ const CreateAdditionalAttachmentField = ({
   const handleDocumentSelection = async () => {
     try {
       const response = await DocumentPicker.pick({
+        type: [DocumentPicker.types.pdf, 'text/comma-separated-values'],
         presentationStyle: 'fullScreen',
         allowMultiSelection: false,
       });
-      // console.log(response);
+      console.log(response);
       onSourceChange(response[0].uri, response[0].name);
     } catch (err) {
       console.warn(err);

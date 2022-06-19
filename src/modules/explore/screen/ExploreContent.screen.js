@@ -74,13 +74,14 @@ const ExploreContent = ({navigation, route}) => {
           item.comment.map(item => {
             uniqueUserId.push(item.createdBy);
           });
-          uniqueUserId.push(
-            jwtDecode(route.params?.userToken?.authToken).data.id,
-          );
         });
+        uniqueUserId.push(
+          jwtDecode(route.params?.userToken?.authToken).data.id,
+        );
         if (res.data.length > 0) {
           uniqueUserId = [...new Set(uniqueUserId)];
         }
+
         const request = userId => {
           return axios.get(`${ApiGatewayBaseUrl}/users/profile/${userId}`, {
             headers: {
@@ -120,17 +121,34 @@ const ExploreContent = ({navigation, route}) => {
                     }
                   });
                   // console.log(listUser);
-                  res.data.map(item => {
-                    const tempItem = item;
-                    listUser.map(item => {
-                      if (item.id === tempItem.createdBy) {
-                        tempItem.user = item;
-                      }
-                    });
-                    fixResult.push(tempItem);
-                  });
-                  setData({isSet: true, data: fixResult});
-                  setListUserData(listUser);
+                  getAsyncStorageObject('@PELENGKAP_DATA_IDEA').then(
+                    dataPelengkapIdea => {
+                      res.data.map(item => {
+                        const dataPasanganPelengkap = dataPelengkapIdea.filter(
+                          itemPasangan =>
+                            itemPasangan.ideaId.toString() === item.id,
+                        )[0];
+                        let tempItem = item;
+                        if (dataPasanganPelengkap) {
+                          tempItem.desc[2].value = dataPasanganPelengkap.cover;
+                          tempItem = {
+                            ...tempItem,
+                            teams: dataPasanganPelengkap.teams,
+                            createdDate: dataPasanganPelengkap.createdDate,
+                            updatedDate: dataPasanganPelengkap.updatedDate,
+                          };
+                        }
+                        listUser.map(item => {
+                          if (item.id === tempItem.createdBy) {
+                            tempItem.user = item;
+                          }
+                        });
+                        fixResult.push(tempItem);
+                      });
+                      setData({isSet: true, data: fixResult});
+                      setListUserData(listUser);
+                    },
+                  );
                 }),
               )
               .catch(errors => {
@@ -935,10 +953,11 @@ const ExploreContent = ({navigation, route}) => {
               keyExtractor={(_, index) => index.toString()}
               scrollEnabled={false}
               showsVerticalScrollIndicator={false}
-              inverted={false}
+              inverted={true}
               renderItem={({item, index}) => (
                 <CardContentNew
                   ideaId={item.id}
+                  teams={item.teams}
                   userToken={route.params?.userToken}
                   creatorId={item.user?.id}
                   creatorName={item.user?.name?.replace(
@@ -949,8 +968,10 @@ const ExploreContent = ({navigation, route}) => {
                   )}
                   creatorPictures={item.user?.pictures}
                   listUser={listUserData}
+                  cover={item.desc[2].value}
                   title={item.desc[0].value}
                   description={item.desc[1].value}
+                  disableJoinButton={false}
                   likes={item.like}
                   // totalComments={item.totalComment}
                   comments={item.comment}
@@ -972,6 +993,7 @@ const ExploreContent = ({navigation, route}) => {
                       ideaData: data.data,
                     })
                   }
+                  onJoinRequestSend={() => fetchIdeas(true)}
                 />
               )}
             />

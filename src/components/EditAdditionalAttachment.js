@@ -24,6 +24,7 @@ import ModalAction from './ModalAction';
 
 const EditAdditionalAttachment = ({
   attachment,
+  listUserData = [],
   onRemoveAttachment = () => {},
   onAddAttachment = () => {},
 }) => {
@@ -164,7 +165,12 @@ const EditAdditionalAttachment = ({
                             numberOfLines={2}
                             ellipsizeMode="tail"
                             style={styles.valueDetail}>
-                            {item.uploadedByName}
+                            {/* {item.uploadedByName} */}
+                            {
+                              listUserData.filter(
+                                itemUser => itemUser.id === item.uploadedById,
+                              )[0]?.name
+                            }
                           </Text>
                         </View>
                       </View>

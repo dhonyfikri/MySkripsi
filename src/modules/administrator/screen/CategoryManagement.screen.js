@@ -227,10 +227,10 @@ const CategoryManagement = ({navigation, route}) => {
           item.comment.map(item => {
             uniqueUserId.push(item.createdBy);
           });
-          uniqueUserId.push(
-            jwtDecode(route.params?.userToken?.authToken).data.id,
-          );
         });
+        uniqueUserId.push(
+          jwtDecode(route.params?.userToken?.authToken).data.id,
+        );
         if (res.data.length > 0) {
           uniqueUserId = [...new Set(uniqueUserId)];
         }

@@ -39,6 +39,10 @@ import {AddLikeAPI} from '../../../config/RequestAPI/LikeAPI';
 import jwtDecode from 'jwt-decode';
 import {AddCommentAPI} from '../../../config/RequestAPI/CommentAPI';
 import {useBackHandler} from '@react-native-community/hooks';
+import {
+  getAsyncStorage,
+  getAsyncStorageObject,
+} from '../../../utils/AsyncStorage/StoreAsyncStorage';
 
 const DetailIdeaScreen = ({navigation, route}) => {
   // const ideaData = _.cloneDeep(DummyResponseDetailIdea);
@@ -121,6 +125,8 @@ const DetailIdeaScreen = ({navigation, route}) => {
     });
   }
 
+  console.log(ideaData?.approval);
+
   const likeStatus =
     ideaData?.like?.filter(item => item.createdBy === decodedJwt.data.id)
       .length > 0;
@@ -132,13 +138,31 @@ const DetailIdeaScreen = ({navigation, route}) => {
       route.params?.userToken?.authToken,
       route.params?.ideaId,
     ).then(res => {
-      setLoading({...loading, visible: false});
-      handleFadeIn();
-      if (res.status === 'SUCCESS') {
-        setIdeaData(res.data);
-      } else if (res.status === 'SERVER_ERROR') {
-        setShowRefreshButton(true);
-      }
+      getAsyncStorageObject('@PELENGKAP_DATA_IDEA').then(pelengkapIdeaItems => {
+        setLoading({...loading, visible: false});
+        handleFadeIn();
+        const pelengkapDataIdea = pelengkapIdeaItems.filter(
+          item => item.ideaId.toString() === res.data.id,
+        )[0];
+        if (res.status === 'SUCCESS') {
+          let fixData = null;
+          fixData = {
+            ...res.data,
+            // allowJoin: route.params?.allowJoin ? route.params?.allowJoin : '0',
+            files: pelengkapDataIdea ? pelengkapDataIdea.files : [],
+            approval: pelengkapDataIdea ? pelengkapDataIdea.teams : [],
+          };
+          fixData.desc[2].value = {
+            uri: pelengkapDataIdea?.cover.uri,
+            mime:
+              'image/' + pelengkapDataIdea?.cover.uri?.split('.')?.slice(-1)[0],
+            name: pelengkapDataIdea?.cover.uri?.split('/')?.slice(-1)[0],
+          };
+          setIdeaData(fixData);
+        } else if (res.status === 'SERVER_ERROR') {
+          setShowRefreshButton(true);
+        }
+      });
     });
   };
 
@@ -443,17 +467,39 @@ const DetailIdeaScreen = ({navigation, route}) => {
               (ideaData.approval?.length > 0 ? (
                 ideaData.approval?.map((item, index) => {
                   return (
-                    <>
+                    <View key={index.toString()}>
                       <CardDetailTeamDesc
                         no={index + 1}
-                        nama={item.approvalTo.name}
-                        nip={item.approvalTo.nik}
-                        unit={item.approvalTo.unitName}
+                        nama={
+                          route.params?.listUser.filter(
+                            item =>
+                              item.id === ideaData?.approval[index].userId,
+                          )[0]?.name
+                        }
+                        nip={
+                          route.params?.listUser.filter(
+                            item =>
+                              item.id === ideaData?.approval[index].userId,
+                          )[0]?.nik
+                        }
+                        teamStructure={ideaData?.approval[index].teamStructure}
+                        workLocation={
+                          route.params?.listUser.filter(
+                            item =>
+                              item.id === ideaData?.approval[index].userId,
+                          )[0]?.workingLocation
+                        }
+                        unit={
+                          route.params?.listUser.filter(
+                            item =>
+                              item.id === ideaData?.approval[index].userId,
+                          )[0]?.unit
+                        }
                       />
                       {index !== ideaData.approval.length - 1 && (
                         <Gap height={12} />
                       )}
-                    </>
+                    </View>
                   );
                 })
               ) : (

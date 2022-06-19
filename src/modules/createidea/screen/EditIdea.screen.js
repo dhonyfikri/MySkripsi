@@ -30,6 +30,10 @@ import {
   GetDetailIdeaAPI,
 } from '../../../config/RequestAPI/IdeaAPI';
 import {useBackHandler} from '@react-native-community/hooks';
+import {
+  getAsyncStorageObject,
+  storeAsyncStorageObject,
+} from '../../../utils/AsyncStorage/StoreAsyncStorage';
 
 const EditIdea = ({navigation, route}) => {
   const decodedJwt = jwtDecode(route.params?.userToken.authToken);
@@ -175,102 +179,60 @@ const EditIdea = ({navigation, route}) => {
       route.params?.userToken?.authToken,
       route.params?.ideaId,
     ).then(res => {
-      setLoading({...loading, visible: false});
-      handleFadeIn();
-      if (res.status === 'SUCCESS') {
-        let fixData = null;
-        fixData = {
-          ...res.data,
-          allowJoin: route.params?.allowJoin ? route.params?.allowJoin : '0',
-          approval: [
-            {
-              id: '17',
-              name: 'Fani Alisya',
-              nik: '2523634643345',
-              noTelp: '085735446657',
-              email: 'fani@mandiri.com',
-              teamStructure: 'Hipster',
-              unit: 'Technical',
-              status: 'approved',
-              approvedDate: '05/05/2022',
-              createdDate: '05/05/2022',
-              updatedDate: '05/05/2022',
-            },
-            {
-              id: '15',
-              name: 'Yudi Pramudya',
-              nik: '432632623452',
-              noTelp: '085743770056',
-              email: 'fani@yudi@mandiri.com',
-              teamStructure: 'Hustler',
-              unit: 'Managerial',
-              status: 'approved',
-              approvedDate: '10/05/2022',
-              createdDate: '02/05/2022',
-              updatedDate: '02/05/2022',
-            },
-          ],
-          files: [
-            {
-              field: 'additionalFileAttachment',
-              value: {
-                name: '[upload] SPTJM Alfian Nur Fathoni L200190002 Telkom.pdf',
-                extension: 'pdf',
-                link: '1649927752_cd23eecb32ae54ddcbc2.pdf',
-              },
-              ideaId: '48',
-              uploadedById: '17',
-              uploadedByName: 'Fani Alisya',
-              uploadedDate: '01/05/2022',
-            },
-            {
-              field: 'additionalFileLinkAttachment',
-              value: {
-                name: 'dokumen 1',
-                extension: null,
-                link: 'http://lokasifile.com',
-              },
-              ideaId: '48',
-              uploadedById: '17',
-              uploadedByName: 'Fani Alisya',
-              uploadedDate: '01/05/2022',
-            },
-            {
-              field: 'additionalFileAttachment',
-              value: {
-                name: '1.1 [Format] SPTJM Mahasiswa MSIB Batch 2.pdf',
-                extension: 'pdf',
-                link: '1649927752_7dcdfa63d7f2da3d30f3.pdf',
-              },
-              ideaId: '48',
-              uploadedById: '17',
-              uploadedByName: 'Fani Alisya',
-              uploadedDate: '01/05/2022',
-            },
-            {
-              field: 'additionalFileLinkAttachment',
-              value: {
-                name: 'dokumen 21',
-                extension: null,
-                link: 'http://lokasifile222.com',
-              },
-              ideaId: '48',
-              uploadedById: '17',
-              uploadedByName: 'Fani Alisya',
-              uploadedDate: '01/05/2022',
-            },
-          ],
-        };
-        fixData.desc[2].value = {
-          uri: res.data.desc[2].value,
-          mime: 'image/' + res.data.desc[2].value?.split('.')?.slice(-1)[0],
-          name: res.data.desc[2].value,
-        };
-        setActualIdeaData(fixData);
-        setCurrentIdeaData(fixData);
-      } else if (res.status === 'SERVER_ERROR') {
-        setShowRefreshButton(true);
-      }
+      getAsyncStorageObject('@PELENGKAP_DATA_IDEA').then(pelengkapIdeaItems => {
+        setLoading({...loading, visible: false});
+        handleFadeIn();
+        const pelengkapDataIdea = pelengkapIdeaItems.filter(
+          item => item.ideaId.toString() === res.data.id,
+        )[0];
+        if (res.status === 'SUCCESS') {
+          let fixData = null;
+          fixData = {
+            ...res.data,
+            allowJoin: route.params?.allowJoin ? route.params?.allowJoin : '0',
+            // approval: [
+            //   {
+            //     id: '17',
+            //     name: 'Fani Alisya',
+            //     nik: '2523634643345',
+            //     noTelp: '085735446657',
+            //     email: 'fani@mandiri.com',
+            //     teamStructure: 'Hipster',
+            //     unit: 'Technical',
+            //     status: 'approved',
+            //     approvedDate: '05/05/2022',
+            //     createdDate: '05/05/2022',
+            //     updatedDate: '05/05/2022',
+            //   },
+            //   {
+            //     id: '15',
+            //     name: 'Yudi Pramudya',
+            //     nik: '432632623452',
+            //     noTelp: '085743770056',
+            //     email: 'fani@yudi@mandiri.com',
+            //     teamStructure: 'Hustler',
+            //     unit: 'Managerial',
+            //     status: 'approved',
+            //     approvedDate: '10/05/2022',
+            //     createdDate: '02/05/2022',
+            //     updatedDate: '02/05/2022',
+            //   },
+            // ],
+            files: pelengkapDataIdea ? pelengkapDataIdea.files : [],
+            approval: pelengkapDataIdea ? pelengkapDataIdea.teams : [],
+          };
+          fixData.desc[2].value = {
+            uri: pelengkapDataIdea?.cover.uri,
+            mime:
+              'image/' + pelengkapDataIdea?.cover.uri?.split('.')?.slice(-1)[0],
+            name: pelengkapDataIdea?.cover.uri?.split('/')?.slice(-1)[0],
+          };
+          setActualIdeaData(fixData);
+          setCurrentIdeaData(fixData);
+        } else if (res.status === 'SERVER_ERROR') {
+          setShowRefreshButton(true);
+        }
+      });
     });
   };
 
@@ -325,19 +287,45 @@ const EditIdea = ({navigation, route}) => {
       inviteUsers: inviteList,
       // attachment: [],
       additionalFileLinkAttachment: linkAttachment,
+      saveAttachment: currentIdeaData.files,
+      teams: currentIdeaData.approval,
     };
   };
 
   const handleSaveEdit = () => {
+    const ideaDataToPostEdit = convertDataIdeaToPost();
     setLoading({...loading, visible: true, message: 'Updating your idea'});
     EditIdeaAPI(
       route.params?.userToken.authToken,
       route.params?.ideaId,
-      convertDataIdeaToPost(),
+      ideaDataToPostEdit,
     ).then(res => {
       setLoading({...loading, visible: false});
       if (res.status === 'SUCCESS') {
-        setMessageSuccessUpdateIdeaModalVisible(true);
+        setLoading({...loading, visible: true, message: 'Processing'});
+        getAsyncStorageObject('@PELENGKAP_DATA_IDEA').then(res => {
+          setLoading({...loading, visible: false});
+          const dataPelengkapIdeaBefore = res.filter(
+            item => item.ideaId.toString() === currentIdeaData.id,
+          )[0];
+          const dataPelengkapIdeaAfter = {
+            ...(dataPelengkapIdeaBefore ? dataPelengkapIdeaBefore : {}),
+            ideaId: currentIdeaData.id,
+            cover: {uri: ideaDataToPostEdit.ideaDescription.cover.uri},
+            files: ideaDataToPostEdit.saveAttachment,
+            teams: ideaDataToPostEdit.teams,
+            updatedDate: dateToText(new Date(), 'dash'),
+          };
+          const dataPelengkapOtherIdea = res.filter(
+            item => item.ideaId.toString() !== currentIdeaData.id,
+          );
+          storeAsyncStorageObject(
+            '@PELENGKAP_DATA_IDEA',
+            dataPelengkapOtherIdea.concat([dataPelengkapIdeaAfter]),
+          ).then(() => {
+            setMessageSuccessUpdateIdeaModalVisible(true);
+          });
+        });
       } else if (
         res.status === 'SOMETHING_WRONG' ||
         res.status === 'UNAUTHORIZED' ||
@@ -661,6 +649,7 @@ const EditIdea = ({navigation, route}) => {
                     ? false
                     : route.params.isGuest
                 }
+                listUserData={route.params?.listUserData}
                 ideaName={actualIdeaData?.desc[0]?.value}
                 teams={currentIdeaData?.approval}
                 onProfilePress={(person, id) => {
@@ -707,6 +696,7 @@ const EditIdea = ({navigation, route}) => {
             {activeIndexOfContent === 4 && (
               <EditAdditionalAttachment
                 attachment={currentIdeaData.files}
+                listUserData={route.params?.listUserData}
                 onRemoveAttachment={index => {
                   if (currentIdeaData !== null) {
                     let tempCurrentIdeaData = {...currentIdeaData};
@@ -718,13 +708,21 @@ const EditIdea = ({navigation, route}) => {
                 onAddAttachment={newAttachment => {
                   if (currentIdeaData !== null) {
                     let fixNewAttachment = {
+                      id: Math.floor(
+                        Math.random() * Math.floor(Math.random() * Date.now()),
+                      ).toString(),
                       field:
                         newAttachment.type === 'File'
                           ? 'additionalFileAttachment'
                           : 'additionalFileLinkAttachment',
                       value: {
                         name: newAttachment.desc,
-                        extension: newAttachment.type === 'File' ? 'pdf' : null,
+                        extension:
+                          newAttachment.type === 'File'
+                            ? newAttachment.documentName
+                                .split('.')
+                                ?.slice(-1)[0]
+                            : null,
                         link:
                           newAttachment.type === 'File'
                             ? newAttachment.documentName

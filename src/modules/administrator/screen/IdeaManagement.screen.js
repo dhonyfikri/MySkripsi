@@ -28,6 +28,10 @@ import axios from 'axios';
 import jwtDecode from 'jwt-decode';
 import {ApiGatewayBaseUrl} from '../../../config/Environment.cfg';
 import {useBackHandler} from '@react-native-community/hooks';
+import {
+  getAsyncStorageObject,
+  storeAsyncStorageObject,
+} from '../../../utils/AsyncStorage/StoreAsyncStorage';
 
 const IdeaManagement = ({navigation, route}) => {
   const decodedJwt = jwtDecode(route.params?.userToken.authToken);
@@ -81,10 +85,10 @@ const IdeaManagement = ({navigation, route}) => {
           item.comment.map(item => {
             uniqueUserId.push(item.createdBy);
           });
-          uniqueUserId.push(
-            jwtDecode(route.params?.userToken?.authToken).data.id,
-          );
         });
+        uniqueUserId.push(
+          jwtDecode(route.params?.userToken?.authToken).data.id,
+        );
         if (res.data.length > 0) {
           uniqueUserId = [...new Set(uniqueUserId)];
         }
@@ -172,11 +176,22 @@ const IdeaManagement = ({navigation, route}) => {
       setLoading({...loading, visible: false});
       console.log(res);
       if (res.status === 'SUCCESS') {
-        setModalDeleteIdeaVisible(false);
-        setSelectedIdea(null);
-        setDeleteIdeaMessage('');
-        setMessageSuccessDeleteIdeaModalVisible(true);
-        setChanged();
+        getAsyncStorageObject('@PELENGKAP_DATA_IDEA').then(
+          dataPelengkapIdea => {
+            storeAsyncStorageObject(
+              '@PELENGKAP_DATA_IDEA',
+              dataPelengkapIdea.filter(
+                item => item.ideaId !== selectedIdea.ideaId,
+              ),
+            ).then(() => {
+              setModalDeleteIdeaVisible(false);
+              setSelectedIdea(null);
+              setDeleteIdeaMessage('');
+              setMessageSuccessDeleteIdeaModalVisible(true);
+              setChanged();
+            });
+          },
+        );
       } else if (
         res.status === 'SOMETHING_WRONG' ||
         res.status === 'ERROR' ||

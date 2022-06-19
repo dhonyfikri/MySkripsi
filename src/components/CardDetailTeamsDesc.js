@@ -17,7 +17,7 @@ const CardDetailTeamDesc = ({
     <View style={styles.card}>
       <View>
         <View style={styles.fieldWrapper}>
-          <Text style={styles.titleText}>No</Text>
+          <Text style={styles.titleText}>Team Member</Text>
           <Divider stroke={1} />
         </View>
         <View style={styles.fieldWrapper}>

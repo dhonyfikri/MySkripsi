@@ -14,30 +14,38 @@ import RBSheet from 'react-native-raw-bottom-sheet';
 import {IcLikeActive, IcLikeInactive, IcSmileEmote} from '../assets/icon';
 import {AddCommentAPI} from '../config/RequestAPI/CommentAPI';
 import {AddLikeAPI} from '../config/RequestAPI/LikeAPI';
+import {
+  getAsyncStorageObject,
+  storeAsyncStorageObject,
+} from '../utils/AsyncStorage/StoreAsyncStorage';
 import {colors} from '../utils/ColorsConfig/Colors';
+import {dateToText} from '../utils/DateConfig/DateConvert';
 import fonts from '../utils/FontsConfig/Fonts';
 import CardComment from './CardCommentSementara';
+import CardReply from './CardReply';
+import Divider from './Divider';
 import Gap from './Gap';
 import {InitialIcon, InitialNumberIcon} from './InitialIcon';
 import LoadingProcessFull from './LoadingProcessFull';
 import ModalMessage from './ModalMessage';
-import Divider from './Divider';
-import CardReply from './CardReply';
-import {height} from 'styled-system';
 
 const CardContentNew = ({
   userToken,
+  teams = [],
   ideaId,
   creatorId,
   creatorName,
   creatorPictures,
+  cover,
   title,
   description,
   likes,
   comments,
   listUser,
+  disableJoinButton,
   onCreatorPress = () => {},
   onIdeaPress = () => {},
+  onJoinRequestSend = () => {},
 }) => {
   const refRBSheetComment = useRef();
   const decodedJwt = jwtDecode(userToken.authToken);
@@ -59,9 +67,23 @@ const CardContentNew = ({
     commentIdToReply: '',
   });
   const [disableLikeButton, setDisableLikeButton] = useState(false);
+  const [disableJoinButtonTemp, setDisableJoinButtonTemp] = useState(false);
 
   const likeStatus =
     likeList.filter(item => item.createdBy === decodedJwt.data.id).length > 0;
+
+  let joinStatus = 'UNJOINED';
+  teams
+    .filter(
+      item => item.userId === decodedJwt.data.id && item.status !== 'Rejected',
+    )
+    .map(item2 => {
+      if (item2.status === 'Approved') {
+        joinStatus = 'JOINED';
+      } else {
+        joinStatus = 'JOIN_PENDING';
+      }
+    });
 
   const lastLikeUser = listUser
     .map(
@@ -78,6 +100,12 @@ const CardContentNew = ({
     setCommentList(comments ? comments : []);
     setLikeList(likes ? likes : []);
   }, [ideaId, creatorId, creatorName, title, description, likes, comments]);
+
+  useEffect(() => {
+    if (disableJoinButton !== disableJoinButtonTemp) {
+      setDisableJoinButtonTemp(disableJoinButton);
+    }
+  }, [disableJoinButton]);
 
   const handleLike = () => {
     setDisableLikeButton(true);
@@ -160,6 +188,54 @@ const CardContentNew = ({
     }
   };
 
+  const requestJoinIdea = () => {
+    setLoading({...loading, visible: true, message: 'Sending join request'});
+    setDisableJoinButtonTemp(true);
+    getAsyncStorageObject('@PELENGKAP_DATA_IDEA').then(res => {
+      const dataPelengkapIdeaBefore = res.filter(
+        item => item.ideaId.toString() === ideaId,
+      )[0];
+      let newTeamsData = [...dataPelengkapIdeaBefore.teams];
+      let dateCreated = new Date();
+      dateCreated.setDate(
+        dateCreated.getDate() -
+          Math.floor(
+            Math.random() *
+              ((new Date(dateToText(new Date(), 'dash')) -
+                new Date(dataPelengkapIdeaBefore.createdDate)) /
+                (1000 * 60 * 60 * 24)) +
+              1,
+          ),
+      );
+      newTeamsData.push({
+        id: Math.floor(
+          Math.random() * Math.floor(Math.random() * Date.now()),
+        ).toString(),
+        userId: decodedJwt.data.id,
+        teamStructure: 'Hipster',
+        notes: 'Want to join this idea',
+        status: 'Pending',
+        createdDate: dateToText(dateCreated),
+        approvedDate: null,
+      });
+      const dataPelengkapIdeaAfter = {
+        ...(dataPelengkapIdeaBefore ? dataPelengkapIdeaBefore : {}),
+        ideaId: ideaId,
+        teams: newTeamsData,
+      };
+      const dataPelengkapOtherIdea = res.filter(
+        item => item.ideaId.toString() !== ideaId,
+      );
+      storeAsyncStorageObject(
+        '@PELENGKAP_DATA_IDEA',
+        dataPelengkapOtherIdea.concat([dataPelengkapIdeaAfter]),
+      ).then(() => {
+        setLoading({...loading, visible: false});
+        onJoinRequestSend();
+      });
+    });
+  };
+
   return (
     <View
       style={{
@@ -211,16 +287,19 @@ const CardContentNew = ({
             paddingVertical: 6.5,
             paddingHorizontal: 8,
             backgroundColor:
-              creatorId === decodedJwt.data?.id
+              joinStatus === 'JOINED'
                 ? colors.success
+                : joinStatus === 'JOIN_PENDING'
+                ? colors.pending
                 : colors.primary,
             borderRadius: 32,
             flexDirection: 'row',
             justifyContent: 'center',
             alignItems: 'center',
           }}
-          disabled={creatorId === decodedJwt.data?.id ? true : false}>
-          {creatorId !== decodedJwt.data?.id ? (
+          disabled={joinStatus !== 'UNJOINED' || disableJoinButtonTemp}
+          onPress={() => requestJoinIdea()}>
+          {joinStatus === 'UNJOINED' ? (
             <Image
               source={require('../assets/icon/joinidea.png')}
               style={{width: 20, height: 20}}
@@ -237,22 +316,42 @@ const CardContentNew = ({
               lineHeight: 14,
               marginHorizontal: 8,
             }}>
-            {creatorId === decodedJwt.data?.id ? 'Joined' : 'Join Idea'}
+            {joinStatus === 'JOINED'
+              ? 'Joined'
+              : joinStatus === 'JOIN_PENDING'
+              ? 'Join Pending'
+              : 'Join Idea'}
           </Text>
         </TouchableOpacity>
       </View>
       <TouchableOpacity
         style={{marginVertical: 17, flexDirection: 'row'}}
         onPress={() => onIdeaPress(ideaId)}>
-        <Image
-          source={require('../assets/icon/dummyhistory.png')}
+        <View
           style={{
             width: 96,
             height: 96,
             borderRadius: 8,
             marginRight: 16,
-          }}
-        />
+            overflow: 'hidden',
+          }}>
+          <Image
+            source={require('../assets/icon/dummyhistory.png')}
+            style={{
+              position: 'absolute',
+              width: 96,
+              height: 96,
+            }}
+          />
+          <Image
+            source={cover}
+            style={{
+              width: '100%',
+              height: '100%',
+              resizeMode: 'cover',
+            }}
+          />
+        </View>
         <View style={{flex: 1}}>
           <Text
             numberOfLines={2}

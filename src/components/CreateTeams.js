@@ -20,7 +20,7 @@ const CreateTeams = ({
     email: '',
     teamStructure: null,
     workingLocation: '',
-    unitId: null,
+    unit: null,
     notes: 'Join yuk',
   };
   const [teams, setTeams] = useState([blankTeam]);
@@ -42,7 +42,7 @@ const CreateTeams = ({
           ? tempTeamItem.teamStructure
           : 'Hipster',
       workingLocation: tempTeamItem.workingLocation,
-      unitId: tempTeamItem.unitId,
+      unit: tempTeamItem.unit,
       notes: 'Join yuk',
     };
     setTeams(tempTeams);
@@ -143,10 +143,10 @@ const CreateTeams = ({
                   tempTeams[index].workingLocation = newWorkingLocation;
                   setTeams(tempTeams);
                 }}
-                unitValue={item.unitId}
-                onUnitChange={newUnitId => {
+                unitValue={item.unit}
+                onUnitChange={newUnit => {
                   let tempTeams = [...teams];
-                  tempTeams[index].unitId = newUnitId;
+                  tempTeams[index].unit = newUnit;
                   setTeams(tempTeams);
                 }}
                 teamStructureItem={[

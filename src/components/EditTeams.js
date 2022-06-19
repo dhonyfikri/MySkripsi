@@ -25,6 +25,7 @@ const EditTeams = ({
   isGuest,
   ideaName,
   teams,
+  listUserData = [],
   onTeamsChange = () => {},
   onTeamsRemoved = () => {},
   onProfilePress = () => {},
@@ -75,119 +76,137 @@ const EditTeams = ({
         renderItem={({item, index}) => {
           return (
             <>
-              <View style={styles.container}>
-                <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                  <ScrollView
-                    contentContainerStyle={{flexGrow: 1}}
-                    horizontal
-                    showsHorizontalScrollIndicator={false}>
-                    <Text style={styles.teamName}>{item?.name}</Text>
-                  </ScrollView>
-                  <Gap width={8} />
-                  <TouchableOpacity
-                    style={{flexDirection: 'row', alignItems: 'center'}}
-                    onPress={() => {
-                      setSelectedTeams({index: index, data: item});
-                      // case for me as teams
-                      if (item.id === decodedJwt?.data.id) {
-                        if (isGuest) {
-                          refRBSheetActionForMeAsGuest.current.open();
-                        } else {
-                          refRBSheetActionForMe.current.open();
-                        }
-                      } else {
-                        if (isGuest) {
-                          refRBSheetActionForOthersAsGuest.current.open();
-                        } else {
-                          refRBSheetActionForOthers.current.open();
-                        }
-                      }
-                    }}>
-                    <IcDotThree />
-                  </TouchableOpacity>
-                </View>
-                <Gap height={12} />
-                <View style={styles.detailContainer}>
-                  <View style={styles.detailTextWrapper}>
-                    <Text style={styles.titleDetail}>NIP</Text>
-                    <Gap width={16} />
-                    <View style={styles.detailField}>
-                      <Text
-                        numberOfLines={2}
-                        ellipsizeMode="tail"
-                        style={styles.valueDetail}>
-                        {item.nik}
-                      </Text>
+              {item.status === 'Approved' && (
+                <>
+                  <View style={styles.container}>
+                    <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                      <ScrollView
+                        contentContainerStyle={{flexGrow: 1}}
+                        horizontal
+                        showsHorizontalScrollIndicator={false}>
+                        <Text style={styles.teamName}>
+                          {
+                            listUserData.filter(
+                              userItem => userItem.id === item.userId,
+                            )[0]?.name
+                          }
+                        </Text>
+                      </ScrollView>
+                      <Gap width={8} />
+                      <TouchableOpacity
+                        style={{flexDirection: 'row', alignItems: 'center'}}
+                        onPress={() => {
+                          setSelectedTeams({index: index, data: item});
+                          // case for me as teams
+                          if (item.userId === decodedJwt?.data.id) {
+                            if (isGuest) {
+                              refRBSheetActionForMeAsGuest.current.open();
+                            } else {
+                              refRBSheetActionForMe.current.open();
+                            }
+                          } else {
+                            if (isGuest) {
+                              refRBSheetActionForOthersAsGuest.current.open();
+                            } else {
+                              refRBSheetActionForOthers.current.open();
+                            }
+                          }
+                        }}>
+                        <IcDotThree />
+                      </TouchableOpacity>
                     </View>
-                  </View>
-                  <Gap height={16} />
-                  <View style={styles.detailTextWrapper}>
-                    <Text style={styles.titleDetail}>Team Structure</Text>
-                    <Gap width={16} />
-                    <View style={styles.detailField}>
-                      <Text
-                        numberOfLines={2}
-                        ellipsizeMode="tail"
-                        style={styles.valueDetail}>
-                        {item.teamStructure}
-                      </Text>
-                    </View>
-                  </View>
-                  <Gap height={16} />
-                  <View style={styles.detailTextWrapper}>
-                    <Text style={styles.titleDetail}>Unit</Text>
-                    <Gap width={16} />
-                    <View style={styles.detailField}>
-                      <Text
-                        numberOfLines={2}
-                        ellipsizeMode="tail"
-                        style={styles.valueDetail}>
-                        {item.unit}
-                      </Text>
-                    </View>
-                  </View>
-                  <Gap height={16} />
-                  <View style={styles.detailTextWrapper}>
-                    <Text style={styles.titleDetail}>Status</Text>
-                    <Gap width={16} />
-                    <View style={styles.detailField}>
-                      <View
-                        style={styles.statusContainer(
-                          item.status.toLowerCase(),
-                        )}>
-                        <Text style={styles.statusText}>{item.status}</Text>
+                    <Gap height={12} />
+                    <View style={styles.detailContainer}>
+                      <View style={styles.detailTextWrapper}>
+                        <Text style={styles.titleDetail}>NIP</Text>
+                        <Gap width={16} />
+                        <View style={styles.detailField}>
+                          <Text
+                            numberOfLines={2}
+                            ellipsizeMode="tail"
+                            style={styles.valueDetail}>
+                            {
+                              listUserData.filter(
+                                userItem => userItem.id === item.userId,
+                              )[0]?.nik
+                            }
+                          </Text>
+                        </View>
+                      </View>
+                      <Gap height={16} />
+                      <View style={styles.detailTextWrapper}>
+                        <Text style={styles.titleDetail}>Team Structure</Text>
+                        <Gap width={16} />
+                        <View style={styles.detailField}>
+                          <Text
+                            numberOfLines={2}
+                            ellipsizeMode="tail"
+                            style={styles.valueDetail}>
+                            {item.teamStructure}
+                          </Text>
+                        </View>
+                      </View>
+                      <Gap height={16} />
+                      <View style={styles.detailTextWrapper}>
+                        <Text style={styles.titleDetail}>Unit</Text>
+                        <Gap width={16} />
+                        <View style={styles.detailField}>
+                          <Text
+                            numberOfLines={2}
+                            ellipsizeMode="tail"
+                            style={styles.valueDetail}>
+                            {
+                              listUserData.filter(
+                                userItem => userItem.id === item.userId,
+                              )[0]?.unit
+                            }
+                          </Text>
+                        </View>
+                      </View>
+                      <Gap height={16} />
+                      <View style={styles.detailTextWrapper}>
+                        <Text style={styles.titleDetail}>Status</Text>
+                        <Gap width={16} />
+                        <View style={styles.detailField}>
+                          <View
+                            style={styles.statusContainer(
+                              item.status.toLowerCase(),
+                            )}>
+                            <Text style={styles.statusText}>{item.status}</Text>
+                          </View>
+                        </View>
+                      </View>
+                      <Gap height={16} />
+                      <View style={styles.detailTextWrapper}>
+                        <Text style={styles.titleDetail}>Created Date</Text>
+                        <Gap width={16} />
+                        <View style={styles.detailField}>
+                          <Text
+                            numberOfLines={2}
+                            ellipsizeMode="tail"
+                            style={styles.valueDetail}>
+                            {item.createdDate}
+                          </Text>
+                        </View>
+                      </View>
+                      <Gap height={16} />
+                      <View style={styles.detailTextWrapper}>
+                        <Text style={styles.titleDetail}>Approved Date</Text>
+                        <Gap width={16} />
+                        <View style={styles.detailField}>
+                          <Text
+                            numberOfLines={2}
+                            ellipsizeMode="tail"
+                            style={styles.valueDetail}>
+                            {item.approvedDate}
+                          </Text>
+                        </View>
                       </View>
                     </View>
                   </View>
-                  <Gap height={16} />
-                  <View style={styles.detailTextWrapper}>
-                    <Text style={styles.titleDetail}>Created Date</Text>
-                    <Gap width={16} />
-                    <View style={styles.detailField}>
-                      <Text
-                        numberOfLines={2}
-                        ellipsizeMode="tail"
-                        style={styles.valueDetail}>
-                        {item.createdDate}
-                      </Text>
-                    </View>
-                  </View>
-                  <Gap height={16} />
-                  <View style={styles.detailTextWrapper}>
-                    <Text style={styles.titleDetail}>Approved Date</Text>
-                    <Gap width={16} />
-                    <View style={styles.detailField}>
-                      <Text
-                        numberOfLines={2}
-                        ellipsizeMode="tail"
-                        style={styles.valueDetail}>
-                        {item.approvedDate}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-              </View>
-              {index !== teams.length - 1 && <Gap height={16} />}
+                  {index !== teams.length - 1 && <Gap height={16} />}
+                </>
+              )}
             </>
           );
         }}
@@ -316,7 +335,7 @@ const EditTeams = ({
         </View>
       </RBSheet>
 
-      {/* Bottom sheet action for me as gust*/}
+      {/* Bottom sheet action for me as guest*/}
       <RBSheet
         ref={refRBSheetActionForMeAsGuest}
         closeOnDragDown={true}
@@ -619,7 +638,11 @@ const EditTeams = ({
         </View>
         <Gap height={16} />
         <EditTeamStructureField
-          teamName={selectedTeams.data?.name}
+          teamName={
+            listUserData.filter(
+              userItem => userItem.id === selectedTeams.data?.userId,
+            )[0]?.name
+          }
           selectedTeamStructure={selectedTeams.data?.teamStructure}
           teamStructureItem={[
             {label: 'Hipster', value: 'Hipster'},

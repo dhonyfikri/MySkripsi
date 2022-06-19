@@ -26,7 +26,12 @@ import ModalMessage from '../../../components/ModalMessage';
 import RefreshFull from '../../../components/RefreshFull';
 import {ApiGatewayBaseUrl} from '../../../config/Environment.cfg';
 import {CreateIdeaAPI, GetIdeasAPI} from '../../../config/RequestAPI/IdeaAPI';
+import {
+  getAsyncStorageObject,
+  storeAsyncStorageObject,
+} from '../../../utils/AsyncStorage/StoreAsyncStorage';
 import {colors} from '../../../utils/ColorsConfig/Colors';
+import {dateToText} from '../../../utils/DateConfig/DateConvert';
 import fonts from '../../../utils/FontsConfig/Fonts';
 
 const CreateIdeaStep = ({navigation, route}) => {
@@ -101,6 +106,7 @@ const CreateIdeaStep = ({navigation, route}) => {
     inviteUsers: [],
     // attachment: [],
     additionalFileLinkAttachment: [],
+    saveAttachment: [],
   });
 
   const stepSession = [
@@ -145,13 +151,14 @@ const CreateIdeaStep = ({navigation, route}) => {
           item.comment.map(item => {
             uniqueUserId.push(item.createdBy);
           });
-          uniqueUserId.push(
-            jwtDecode(route.params?.userToken?.authToken).data.id,
-          );
         });
+        uniqueUserId.push(
+          jwtDecode(route.params?.userToken?.authToken).data.id,
+        );
         if (res.data.length > 0) {
           uniqueUserId = [...new Set(uniqueUserId)];
         }
+
         const request = userId => {
           return axios.get(`${ApiGatewayBaseUrl}/users/profile/${userId}`, {
             headers: {
@@ -171,35 +178,46 @@ const CreateIdeaStep = ({navigation, route}) => {
           listGetUserRequest.push(request(item));
         });
 
-        axios
-          .all(listGetUserRequest)
-          .then(
-            axios.spread((...responses) => {
-              responses.map(item => {
-                if (item.data.data.length > 0) {
-                  listUser.push(item.data.data[0]);
-                }
+        getAsyncStorageObject('@PELENGKAP_DATA_USER').then(
+          resPelengkapDataUser => {
+            axios
+              .all(listGetUserRequest)
+              .then(
+                axios.spread((...responses) => {
+                  responses.map(item => {
+                    if (item.data.data.length > 0) {
+                      listUser.push({
+                        ...item.data.data[0],
+                        ...resPelengkapDataUser?.filter(
+                          itemPelengkap =>
+                            itemPelengkap.id === item.data.data[0].id,
+                        )[0],
+                        bio: item.data.data[0]?.bio,
+                      });
+                    }
+                  });
+                  // console.log(listUser);
+                  res.data.map(item => {
+                    const tempItem = item;
+                    listUser.map(item => {
+                      if (item.id === tempItem.createdBy) {
+                        tempItem.user = item;
+                      }
+                    });
+                    fixResult.push(tempItem);
+                  });
+                  setListIdea(fixResult);
+                  setListUserData(listUser);
+                  setLoading({...loading, visible: false});
+                }),
+              )
+              .catch(errors => {
+                setLoading({...loading, visible: false});
+                setShowRefreshButton(true);
+                console.log(errors);
               });
-              // console.log(listUser);
-              res.data.map(item => {
-                const tempItem = item;
-                listUser.map(item => {
-                  if (item.id === tempItem.createdBy) {
-                    tempItem.user = item;
-                  }
-                });
-                fixResult.push(tempItem);
-              });
-              setListIdea(fixResult);
-              setListUserData(listUser);
-              setLoading({...loading, visible: false});
-            }),
-          )
-          .catch(errors => {
-            setLoading({...loading, visible: false});
-            setShowRefreshButton(true);
-            console.log(errors);
-          });
+          },
+        );
 
         // setData({isSet: true, data: res.data});
       } else if (
@@ -229,7 +247,75 @@ const CreateIdeaStep = ({navigation, route}) => {
       setLoading({...loading, visible: false});
       setSubmittedIdea(false);
       if (res.status === 'SUCCESS' || res.status === 'BACKEND_ERROR') {
-        setMessageSuccessModalVisible(true);
+        setLoading({...loading, visible: true, message: 'Processing'});
+        GetIdeasAPI(route.params?.userToken?.authToken).then(res => {
+          setLoading({...loading, visible: false});
+          if (res.status === 'SUCCESS') {
+            const ideaIdList = [];
+            res.data.map(item => {
+              ideaIdList.push(parseInt(item.id));
+            });
+            const latestIdeaId = Math.max(...ideaIdList);
+            let dateCreated = new Date();
+            dateCreated.setDate(
+              dateCreated.getDate() -
+                Math.floor(
+                  Math.random() *
+                    ((new Date(dateToText(new Date(), 'dash')) -
+                      new Date('2022-01-01')) /
+                      (1000 * 60 * 60 * 24)) +
+                    1,
+                ),
+            );
+
+            getAsyncStorageObject('@PELENGKAP_DATA_IDEA').then(res => {
+              let files = [];
+              idea.saveAttachment.map(item => {
+                files.push({...item, uploadedDate: dateToText(dateCreated)});
+              });
+              const data = {
+                ideaId: latestIdeaId.toString(),
+                cover: {uri: idea.ideaDescription.cover.uri},
+                files: files,
+                teams: [
+                  {
+                    ...idea.inviteUsers.filter(
+                      item => item.userId === decodedJwt.data.id,
+                    )[0],
+                    id: Math.floor(
+                      Math.random() * Math.floor(Math.random() * Date.now()),
+                    ).toString(),
+                    status: 'Approved',
+                    createdDate: dateToText(dateCreated),
+                    approvedDate: dateToText(dateCreated),
+                  },
+                ],
+                createdDate: dateToText(dateCreated, 'dash'),
+                updatedDate: dateToText(dateCreated, 'dash'),
+              };
+              storeAsyncStorageObject(
+                '@PELENGKAP_DATA_IDEA',
+                res ? res.concat([data]) : [data],
+              ).then(() => {
+                setMessageSuccessModalVisible(true);
+              });
+            });
+          } else if (
+            res.status === 'SOMETHING_WRONG' ||
+            res.status === 'NOT_FOUND' ||
+            res.status === 'UNDEFINED_HEADER' ||
+            res.status === 'UNAUTHORIZED' ||
+            res.status === 'SERVER_ERROR'
+          ) {
+            setMessageModal({
+              ...messageModal,
+              visible: true,
+              title: 'Failed',
+              message: res.message,
+              type: 'confused',
+            });
+          }
+        });
       } else if (
         res.status === 'SOMETHING_WRONG' ||
         res.status === 'UNAUTHORIZED' ||
@@ -471,9 +557,43 @@ const CreateIdeaStep = ({navigation, route}) => {
                           newFileAttachment,
                           newLinkAttachment,
                         ) => {
+                          let saveAttachment = [];
+                          newLinkAttachment.map(item => {
+                            saveAttachment.push({
+                              id: Math.floor(
+                                Math.random() *
+                                  Math.floor(Math.random() * Date.now()),
+                              ).toString(),
+                              field: 'additionalFileLinkAttachment',
+                              value: {
+                                name: item.name,
+                                extension: null,
+                                link: item.link,
+                              },
+                              uploadedById: decodedJwt.data.id,
+                              uploadedDate: dateToText(new Date()),
+                            });
+                          });
+                          newFileAttachment.map(item => {
+                            saveAttachment.push({
+                              id: Math.floor(
+                                Math.random() *
+                                  Math.floor(Math.random() * Date.now()),
+                              ).toString(),
+                              field: 'additionalFileAttachment',
+                              value: {
+                                name: item.name,
+                                extension: item.extension,
+                                link: item.link,
+                              },
+                              uploadedById: decodedJwt.data.id,
+                              uploadedDate: dateToText(new Date()),
+                            });
+                          });
                           setIdea({
                             ...idea,
                             additionalFileLinkAttachment: newLinkAttachment,
+                            saveAttachment: saveAttachment,
                           });
                         }}
                       />

@@ -24,6 +24,7 @@ import {
   removeAsyncStorageItem,
 } from '../../../utils/AsyncStorage/StoreAsyncStorage';
 import {colors} from '../../../utils/ColorsConfig/Colors';
+import {dateToText} from '../../../utils/DateConfig/DateConvert';
 import fonts from '../../../utils/FontsConfig/Fonts';
 
 const Profile = ({navigation, route}) => {
@@ -339,8 +340,8 @@ const Profile = ({navigation, route}) => {
               itemTitle: 'FAQ',
               // onPress: () => console.log('FAQ Clicked'),
               onPress: () => {
-                getAsyncStorageObject('@PELENGKAP_DATA_USER').then(res =>
-                  console.log(res),
+                getAsyncStorageObject('@PELENGKAP_DATA_IDEA').then(res =>
+                  console.log(res[1]),
                 );
               },
             }}
