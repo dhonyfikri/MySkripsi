@@ -305,7 +305,7 @@ const EditTeams = ({
               style={{padding: 16}}
               onPress={() => {
                 refRBSheetActionForOthers.current.close();
-                onProfilePress('others', selectedTeams.data.id);
+                onProfilePress('others', selectedTeams.data.userId);
               }}>
               <Text style={styles.buttonText('normal')}>Detail Profile</Text>
             </TouchableOpacity>
@@ -429,7 +429,7 @@ const EditTeams = ({
               style={{padding: 16}}
               onPress={() => {
                 refRBSheetActionForOthersAsGuest.current.close();
-                onProfilePress('others', selectedTeams.data.id);
+                onProfilePress('others', selectedTeams.data.userId);
               }}>
               <Text style={styles.buttonText('normal')}>Detail Profile</Text>
             </TouchableOpacity>
@@ -599,6 +599,7 @@ const EditTeams = ({
           onSavePress={() => {
             setModalLeaveIdeaVisible(false);
             setLeaveIdeaMessage('');
+            console.log(selectedTeams);
             setMessageSuccessLeaveIdeaModalVisible(true);
           }}
         />

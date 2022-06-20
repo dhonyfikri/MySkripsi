@@ -413,7 +413,10 @@ const EditIdea = ({navigation, route}) => {
 
   const backToPreviousPage = (withRefresh = false) => {
     if (withRefresh) {
-      navigation.navigate('SubmittedIdea', {
+      const pageBack = route.params?.fromPage
+        ? route.params?.fromPage
+        : 'SubmittedIdea';
+      navigation.navigate(`${pageBack}`, {
         userToken: route.params?.userToken,
         refresh: {status: true},
       });
@@ -460,7 +463,8 @@ const EditIdea = ({navigation, route}) => {
         }}
         backText="Back"
         title="Edit Idea"
-        onNotificationPress={() => navigation.navigate('Notification')}
+        withNotification={false}
+        // onNotificationPress={() => navigation.navigate('Notification')}
       />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
@@ -688,7 +692,10 @@ const EditIdea = ({navigation, route}) => {
                   }
                 }}
                 onLeaveIdea={() => {
-                  navigation.goBack();
+                  navigation.navigate('JoinedIdea', {
+                    userToken: route.params?.userToken,
+                    leavingIdea: {status: true},
+                  });
                 }}
               />
             )}

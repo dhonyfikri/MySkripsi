@@ -296,7 +296,11 @@ const DetailIdeaScreen = ({navigation, route}) => {
           backToPreviousPage();
         }}
         backText="Back"
-        onNotificationPress={() => navigation.navigate('Notification')}
+        onNotificationPress={() =>
+          navigation.navigate('Notification', {
+            userToken: route.params?.userToken,
+          })
+        }
       />
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -465,43 +469,28 @@ const DetailIdeaScreen = ({navigation, route}) => {
             style={{...styles.dataSessionContainer, opacity: fadeAnim}}>
             {ideaData &&
               (ideaData.approval?.length > 0 ? (
-                ideaData.approval?.map((item, index) => {
-                  return (
-                    <View key={index.toString()}>
-                      <CardDetailTeamDesc
-                        no={index + 1}
-                        nama={
-                          route.params?.listUser.filter(
-                            item =>
-                              item.id === ideaData?.approval[index].userId,
-                          )[0]?.name
-                        }
-                        nip={
-                          route.params?.listUser.filter(
-                            item =>
-                              item.id === ideaData?.approval[index].userId,
-                          )[0]?.nik
-                        }
-                        teamStructure={ideaData?.approval[index].teamStructure}
-                        workLocation={
-                          route.params?.listUser.filter(
-                            item =>
-                              item.id === ideaData?.approval[index].userId,
-                          )[0]?.workingLocation
-                        }
-                        unit={
-                          route.params?.listUser.filter(
-                            item =>
-                              item.id === ideaData?.approval[index].userId,
-                          )[0]?.unit
-                        }
-                      />
-                      {index !== ideaData.approval.length - 1 && (
-                        <Gap height={12} />
-                      )}
-                    </View>
-                  );
-                })
+                ideaData.approval
+                  .filter(item => item.status === 'Approved')
+                  .map((team, index) => {
+                    const teamData = route.params?.listUser.filter(
+                      item => item.id === team.userId,
+                    )[0];
+                    return (
+                      <View key={index.toString()}>
+                        <CardDetailTeamDesc
+                          no={index + 1}
+                          nama={teamData?.name}
+                          nip={teamData?.nik}
+                          teamStructure={team.teamStructure}
+                          workLocation={teamData?.workingLocation}
+                          unit={teamData?.unit}
+                        />
+                        {index !== ideaData.approval.length - 1 && (
+                          <Gap height={12} />
+                        )}
+                      </View>
+                    );
+                  })
               ) : (
                 <View
                   style={{

@@ -159,7 +159,11 @@ const MyProfile = ({navigation, route}) => {
         backButton
         onBackPress={backToPreviousPage}
         backText="Back"
-        onNotificationPress={() => navigation.navigate('Notification')}
+        onNotificationPress={() =>
+          navigation.navigate('Notification', {
+            userToken: route.params?.userToken,
+          })
+        }
       />
       <ScrollView>
         <CardProfileMainContent

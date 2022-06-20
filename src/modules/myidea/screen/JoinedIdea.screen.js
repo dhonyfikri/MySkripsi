@@ -1,3 +1,5 @@
+import axios from 'axios';
+import jwtDecode from 'jwt-decode';
 import React, {useEffect, useState, useRef} from 'react';
 import {
   FlatList,
@@ -16,53 +18,30 @@ import Divider from '../../../components/Divider';
 import EditActionButton from '../../../components/EditActionButton';
 import Gap from '../../../components/Gap';
 import Header from '../../../components/Header';
+import LoadingProcessFull from '../../../components/LoadingProcessFull';
 import ModalAction from '../../../components/ModalAction';
 import ModalMessage from '../../../components/ModalMessage';
+import RefreshFull from '../../../components/RefreshFull';
+import {ApiGatewayBaseUrl} from '../../../config/Environment.cfg';
+import {GetIdeasAPI} from '../../../config/RequestAPI/IdeaAPI';
+import {
+  getAsyncStorageObject,
+  storeAsyncStorageObject,
+} from '../../../utils/AsyncStorage/StoreAsyncStorage';
 import {colors} from '../../../utils/ColorsConfig/Colors';
-import {textToDate} from '../../../utils/DateConfig/DateConvert';
+import {dateToText, textToDate} from '../../../utils/DateConfig/DateConvert';
 import fonts from '../../../utils/FontsConfig/Fonts';
 
 const JoinedIdea = ({navigation, route}) => {
-  const dataFromServer = [
-    {
-      id: 1,
-      ideaId: 1,
-      ideaName: 'Pembuatan Robot',
-      ownerId: 4,
-      ownerName: 'Siti Bojong G.',
-      createdDate: '20/02/2022, 12:00:01',
-    },
-    {
-      id: 2,
-      ideaId: 5,
-      ideaName: 'Pembuatan Televisi',
-      ownerId: 4,
-      ownerName: 'Siti Bojong G.',
-      createdDate: '04/01/2022, 14:00:01',
-    },
-    {
-      id: 3,
-      ideaId: 20,
-      ideaName: 'Pembuatan Remote',
-      ownerId: 4,
-      ownerName: 'Siti Bojong G.',
-      createdDate: '26/10/2022, 16:00:01',
-    },
-    {
-      id: 4,
-      ideaId: 32,
-      ideaName: 'Pembuatan Microwife',
-      ownerId: 4,
-      ownerName: 'Siti Bojong G.',
-      createdDate: '12/05/2022, 18:00:01',
-    },
-  ];
+  const decodedJwt = jwtDecode(route.params?.userToken.authToken);
 
   const refRBSheetAction = useRef();
   const refRBSheetCalendar = useRef();
 
-  const [joinedIdea, setJoinedIdea] = useState(dataFromServer);
-  const [joinedIdeaToShow, setJoinedIdeaToShow] = useState(dataFromServer);
+  const [joinedIdea, setJoinedIdea] = useState([]);
+  const [joinedIdeaToShow, setJoinedIdeaToShow] = useState([]);
+  const [listUserData, setListUserData] = useState([]);
+  const [ideaDataList, setIdeaDataList] = useState([]);
   const [searchText, setSearchText] = useState('');
   const [selectedIdea, setSelectedIdea] = useState(null);
 
@@ -78,6 +57,178 @@ const JoinedIdea = ({navigation, route}) => {
     setMessageSuccessLeaveIdeaModalVisible,
   ] = useState(false);
   const [leaveIdeaMessage, setLeaveIdeaMessage] = useState('');
+  const [loading, setLoading] = useState({
+    visible: true,
+    message: 'Please Wait',
+  });
+  const [messageModal, setMessageModal] = useState({
+    visible: false,
+    message: undefined,
+    title: undefined,
+    type: 'smile',
+    onClose: () => {},
+  });
+  const [showRefreshBUtton, setShowRefreshButton] = useState(false);
+  const [isChanged, setIsChanged] = useState(false);
+
+  const fetchIdeas = () => {
+    setLoading({...loading, visible: true});
+    GetIdeasAPI(route.params?.userToken?.authToken).then(res => {
+      if (res.status === 'SUCCESS') {
+        let fixResult = [];
+        let uniqueUserId = [];
+        res.data.map(item => {
+          uniqueUserId.push(item.createdBy);
+          item.like.map(item => {
+            uniqueUserId.push(item.createdBy);
+          });
+          item.comment.map(item => {
+            uniqueUserId.push(item.createdBy);
+          });
+        });
+        uniqueUserId.push(
+          jwtDecode(route.params?.userToken?.authToken).data.id,
+        );
+        if (res.data.length > 0) {
+          uniqueUserId = [...new Set(uniqueUserId)];
+        }
+
+        const request = userId => {
+          return axios.get(`${ApiGatewayBaseUrl}/users/profile/${userId}`, {
+            headers: {
+              Authorization: `Bearer ${route.params?.userToken?.authToken}`,
+              Tenant: `https://${
+                jwtDecode(route.params?.userToken?.authToken).data
+                  .tenantSubdomain
+              }.ideaboxapp.com`,
+            },
+          });
+        };
+
+        const listUser = [];
+        const listGetUserRequest = [];
+
+        uniqueUserId.map(item => {
+          listGetUserRequest.push(request(item));
+        });
+
+        getAsyncStorageObject('@PELENGKAP_DATA_USER').then(
+          resPelengkapDataUser => {
+            axios
+              .all(listGetUserRequest)
+              .then(
+                axios.spread((...responses) => {
+                  responses.map(item => {
+                    if (item.data.data.length > 0) {
+                      listUser.push({
+                        ...item.data.data[0],
+                        ...resPelengkapDataUser?.filter(
+                          itemPelengkap =>
+                            itemPelengkap.id === item.data.data[0].id,
+                        )[0],
+                        bio: item.data.data[0]?.bio,
+                      });
+                    }
+                  });
+                  // console.log(listUser);
+                  getAsyncStorageObject('@PELENGKAP_DATA_IDEA').then(
+                    dataPelengkapIdea => {
+                      res.data.map(item => {
+                        const dataPasanganPelengkap = dataPelengkapIdea.filter(
+                          itemPasangan =>
+                            itemPasangan.ideaId.toString() === item.id,
+                        )[0];
+                        let tempItem = item;
+                        if (dataPasanganPelengkap) {
+                          tempItem.desc[2].value = dataPasanganPelengkap.cover;
+                          tempItem = {
+                            ...tempItem,
+                            teams: dataPasanganPelengkap.teams,
+                            createdDate: dataPasanganPelengkap.createdDate,
+                            updatedDate: dataPasanganPelengkap.updatedDate,
+                          };
+                        }
+                        listUser.map(item => {
+                          if (item.id === tempItem.createdBy) {
+                            tempItem.user = item;
+                          }
+                        });
+                        fixResult.push(tempItem);
+                      });
+                      setIdeaDataList(fixResult);
+                      let fixSubmittedIdea = [];
+                      fixResult
+                        .filter(
+                          item =>
+                            item.createdBy !== decodedJwt.data.id &&
+                            item.teams.filter(
+                              team =>
+                                team.userId === decodedJwt.data.id &&
+                                team.status === 'Approved',
+                            ).length > 0,
+                        )
+                        .map(item => {
+                          fixSubmittedIdea.push({
+                            ideaId: item.id,
+                            ideaName: item.desc[0].value,
+                            allowJoin: item.allowJoin,
+                            ownerId: item.createdBy,
+                            ownerName: item.user.name,
+                            createdDate: dateToText(
+                              textToDate(item.createdDate, 'dash'),
+                            ),
+                          });
+                        });
+                      setJoinedIdea(fixSubmittedIdea);
+                      setListUserData(listUser);
+                      setLoading({...loading, visible: false});
+                    },
+                  );
+                }),
+              )
+              .catch(errors => {
+                setLoading({...loading, visible: false});
+                setShowRefreshButton(true);
+                console.log(errors);
+              });
+          },
+        );
+      } else if (
+        res.status === 'SOMETHING_WRONG' ||
+        res.status === 'NOT_FOUND' ||
+        res.status === 'UNDEFINED_HEADER' ||
+        res.status === 'UNAUTHORIZED' ||
+        res.status === 'SERVER_ERROR'
+      ) {
+        setLoading({...loading, visible: false});
+        setShowRefreshButton(true);
+      }
+    });
+  };
+
+  const leavingIdea = () => {
+    setLoading({...loading, visible: true, message: 'Leaving'});
+    getAsyncStorageObject('@PELENGKAP_DATA_IDEA').then(res => {
+      const dataPelengkapIdea = res.filter(
+        item => item.ideaId.toString() === selectedIdea?.ideaId,
+      )[0];
+      const dataPelengkapTeamAfterLeave = dataPelengkapIdea?.teams.filter(
+        item =>
+          item.userId !== decodedJwt.data.id || item.status !== 'Approved',
+      );
+      dataPelengkapIdea.teams = dataPelengkapTeamAfterLeave;
+      const dataPelengkapOtherIdea = res.filter(
+        item => item.ideaId.toString() !== selectedIdea?.ideaId,
+      );
+      storeAsyncStorageObject(
+        '@PELENGKAP_DATA_IDEA',
+        dataPelengkapOtherIdea.concat([dataPelengkapIdea]),
+      ).then(() => {
+        setLoading({...loading, visible: false});
+        setMessageSuccessLeaveIdeaModalVisible(true);
+      });
+    });
+  };
 
   const matchToSearch = () => {
     let tempJoinedIdea = [];
@@ -132,9 +283,45 @@ const JoinedIdea = ({navigation, route}) => {
     return tempJoinedIdea;
   };
 
+  const setChanged = () => {
+    if (!isChanged) {
+      setIsChanged(true);
+    }
+  };
+
   useEffect(() => {
     setJoinedIdeaToShow(matchToFilter(joinedIdea));
   }, [filterDate, joinedIdea]);
+
+  useEffect(() => {
+    if (route.params?.leavingIdea?.status) {
+      setChanged();
+      leavingIdea();
+    }
+    if (route.params?.leavingIdea?.status) {
+      navigation.setParams({
+        ...route.params,
+        leavingIdea: {status: false},
+      });
+    }
+  }, [route.params?.leavingIdea]);
+
+  useEffect(() => {
+    if (route.params?.refresh?.status) {
+      setChanged();
+      fetchIdeas();
+    }
+    if (route.params?.refresh?.status) {
+      navigation.setParams({
+        ...route.params,
+        refresh: {status: false},
+      });
+    }
+  }, [route.params?.refresh]);
+
+  useEffect(() => {
+    fetchIdeas();
+  }, []);
 
   return (
     <View style={styles.page}>
@@ -143,7 +330,11 @@ const JoinedIdea = ({navigation, route}) => {
         onBackPress={() => navigation.goBack()}
         backText="Back"
         title="Joined Idea"
-        onNotificationPress={() => navigation.navigate('Notification')}
+        onNotificationPress={() =>
+          navigation.navigate('Notification', {
+            userToken: route.params?.userToken,
+          })
+        }
       />
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -197,6 +388,17 @@ const JoinedIdea = ({navigation, route}) => {
           }}
         />
       </ScrollView>
+
+      <LoadingProcessFull visible={loading.visible} message={loading.message} />
+      <RefreshFull
+        visible={showRefreshBUtton}
+        onPress={() => {
+          setShowRefreshButton(false);
+          fetchIdeas();
+        }}
+        onOffsetTouch={() => navigation.goBack()}
+      />
+
       {/* Bottom sheet action */}
       <RBSheet
         ref={refRBSheetAction}
@@ -240,8 +442,12 @@ const JoinedIdea = ({navigation, route}) => {
               onPress={() => {
                 refRBSheetAction.current.close();
                 navigation.navigate('EditIdea', {
+                  fromPage: 'JoinedIdea',
                   ideaId: selectedIdea.ideaId,
+                  allowJoin: selectedIdea.allowJoin,
                   userToken: route.params?.userToken,
+                  ideaDataList: ideaDataList,
+                  listUserData: listUserData,
                   isGuest: true,
                 });
               }}>
@@ -375,13 +581,13 @@ const JoinedIdea = ({navigation, route}) => {
           }}
           onSavePress={() => {
             setModalLeaveIdeaVisible(false);
-            let tempIdea = joinedIdeaToShow.filter(item => {
-              return item.ideaId !== selectedIdea.ideaId;
-            });
+            // let tempIdea = joinedIdeaToShow.filter(item => {
+            //   return item.ideaId !== selectedIdea.ideaId;
+            // });
             setSelectedIdea(null);
-            setJoinedIdeaToShow(tempIdea);
+            // setJoinedIdeaToShow(tempIdea);
             setLeaveIdeaMessage('');
-            setMessageSuccessLeaveIdeaModalVisible(true);
+            leavingIdea();
           }}
         />
       </ModalAction>
@@ -400,9 +606,11 @@ const JoinedIdea = ({navigation, route}) => {
         withBackButton
         onBack={() => {
           setMessageSuccessLeaveIdeaModalVisible(false);
+          fetchIdeas();
         }}
         onRequestClose={() => {
           setMessageSuccessLeaveIdeaModalVisible(false);
+          fetchIdeas();
         }}
       />
     </View>

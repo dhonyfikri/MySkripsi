@@ -323,7 +323,11 @@ const CategoryManagement = ({navigation, route}) => {
         onBackPress={() => navigation.goBack()}
         backText="Back"
         title="Category Management"
-        onNotificationPress={() => navigation.navigate('Notification')}
+        onNotificationPress={() =>
+          navigation.navigate('Notification', {
+            userToken: route.params?.userToken,
+          })
+        }
       />
       <ScrollView
         showsVerticalScrollIndicator={false}

@@ -291,7 +291,10 @@ const Profile = ({navigation, route}) => {
             title="Tallent Approval"
             singleData={{
               itemTitle: 'Talent Approval',
-              onPress: () => navigation.navigate('TalentApproval'),
+              onPress: () =>
+                navigation.navigate('TalentApproval', {
+                  userToken: route.params?.userToken,
+                }),
             }}
           />
           {profileData?.roleId === '3' && (
@@ -341,7 +344,7 @@ const Profile = ({navigation, route}) => {
               // onPress: () => console.log('FAQ Clicked'),
               onPress: () => {
                 getAsyncStorageObject('@PELENGKAP_DATA_IDEA').then(res =>
-                  console.log(res[1]),
+                  console.log(res[0]),
                 );
               },
             }}

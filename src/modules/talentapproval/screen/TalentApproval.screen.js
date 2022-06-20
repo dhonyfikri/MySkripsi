@@ -16,9 +16,17 @@ import Gap from '../../../components/Gap';
 import Header from '../../../components/Header';
 import {colors} from '../../../utils/ColorsConfig/Colors';
 import fonts from '../../../utils/FontsConfig/Fonts';
-import {textToDate} from '../../../utils/DateConfig/DateConvert';
+import {dateToText, textToDate} from '../../../utils/DateConfig/DateConvert';
+import {GetIdeasAPI} from '../../../config/RequestAPI/IdeaAPI';
+import jwtDecode from 'jwt-decode';
+import {getAsyncStorageObject} from '../../../utils/AsyncStorage/StoreAsyncStorage';
+import LoadingProcessFull from '../../../components/LoadingProcessFull';
+import RefreshFull from '../../../components/RefreshFull';
+import axios from 'axios';
+import {ApiGatewayBaseUrl} from '../../../config/Environment.cfg';
 
 const TalentApproval = ({navigation, route}) => {
+  const decodedJwt = jwtDecode(route.params?.userToken.authToken);
   const dataFromServer = [
     {
       id: 1,
@@ -64,10 +72,10 @@ const TalentApproval = ({navigation, route}) => {
 
   const refRBSheetFilter = useRef();
 
-  const [talentApprovalRequest, setTalentApprovalRequest] =
-    useState(dataFromServer);
-  const [talentApprovalToShow, setTalentApprovalToShow] =
-    useState(dataFromServer);
+  const [talentApprovalRequest, setTalentApprovalRequest] = useState([]);
+  const [talentApprovalToShow, setTalentApprovalToShow] = useState([]);
+  const [submittedIdea, setSubmittedIdea] = useState([]);
+  const [listUserData, setListUserData] = useState([]);
   const [searchText, setSearchText] = useState('');
   const [pendingClicked, setPendingClicked] = useState(false);
   const [filterByStatusValue, setFilterByStatusValue] = useState([
@@ -77,6 +85,11 @@ const TalentApproval = ({navigation, route}) => {
   ]);
   const [filterByDateValue, setFilterByDateValue] = useState('latest');
   const [onResume, setOnResume] = useState({status: true});
+  const [loading, setLoading] = useState({
+    visible: true,
+    message: 'Please Wait',
+  });
+  const [showRefreshBUtton, setShowRefreshButton] = useState(false);
 
   let pendingRequestCount = 0;
   talentApprovalRequest.map(item => {
@@ -84,6 +97,140 @@ const TalentApproval = ({navigation, route}) => {
       pendingRequestCount += 1;
     }
   });
+
+  const fetchIdeas = () => {
+    setLoading({...loading, visible: true});
+    GetIdeasAPI(route.params?.userToken?.authToken).then(res => {
+      if (res.status === 'SUCCESS') {
+        let fixResult = [];
+        let uniqueUserId = [];
+        res.data.map(item => {
+          uniqueUserId.push(item.createdBy);
+          item.like.map(item => {
+            uniqueUserId.push(item.createdBy);
+          });
+          item.comment.map(item => {
+            uniqueUserId.push(item.createdBy);
+          });
+        });
+        uniqueUserId.push(
+          jwtDecode(route.params?.userToken?.authToken).data.id,
+        );
+        if (res.data.length > 0) {
+          uniqueUserId = [...new Set(uniqueUserId)];
+        }
+
+        const request = userId => {
+          return axios.get(`${ApiGatewayBaseUrl}/users/profile/${userId}`, {
+            headers: {
+              Authorization: `Bearer ${route.params?.userToken?.authToken}`,
+              Tenant: `https://${
+                jwtDecode(route.params?.userToken?.authToken).data
+                  .tenantSubdomain
+              }.ideaboxapp.com`,
+            },
+          });
+        };
+
+        const listUser = [];
+        const listGetUserRequest = [];
+
+        uniqueUserId.map(item => {
+          listGetUserRequest.push(request(item));
+        });
+
+        getAsyncStorageObject('@PELENGKAP_DATA_USER').then(
+          resPelengkapDataUser => {
+            axios
+              .all(listGetUserRequest)
+              .then(
+                axios.spread((...responses) => {
+                  responses.map(item => {
+                    if (item.data.data.length > 0) {
+                      listUser.push({
+                        ...item.data.data[0],
+                        ...resPelengkapDataUser?.filter(
+                          itemPelengkap =>
+                            itemPelengkap.id === item.data.data[0].id,
+                        )[0],
+                        bio: item.data.data[0]?.bio,
+                      });
+                    }
+                  });
+                  // console.log(listUser);
+                  getAsyncStorageObject('@PELENGKAP_DATA_IDEA').then(
+                    dataPelengkapIdea => {
+                      res.data.map(item => {
+                        const dataPasanganPelengkap = dataPelengkapIdea.filter(
+                          itemPasangan =>
+                            itemPasangan.ideaId.toString() === item.id,
+                        )[0];
+                        let tempItem = item;
+                        if (dataPasanganPelengkap) {
+                          tempItem.desc[2].value = dataPasanganPelengkap.cover;
+                          tempItem = {
+                            ...tempItem,
+                            teams: dataPasanganPelengkap.teams,
+                            createdDate: dataPasanganPelengkap.createdDate,
+                            updatedDate: dataPasanganPelengkap.updatedDate,
+                          };
+                        }
+                        listUser.map(item => {
+                          if (item.id === tempItem.createdBy) {
+                            tempItem.user = item;
+                          }
+                        });
+                        fixResult.push(tempItem);
+                      });
+                      let fixSubmittedIdea = fixResult.filter(
+                        item => item.createdBy === decodedJwt.data.id,
+                      );
+                      let tempTalentApprovalTail = [];
+                      fixSubmittedIdea.map(ideaItem => {
+                        ideaItem.teams?.map(teamItem => {
+                          if (teamItem.userId !== decodedJwt.data.id) {
+                            tempTalentApprovalTail.push({
+                              id: teamItem.id,
+                              status: teamItem.status,
+                              ideaId: ideaItem.id,
+                              ideaName: ideaItem.desc[0].value,
+                              personId: teamItem.userId,
+                              personName: listUser.filter(
+                                userItem => userItem.id === teamItem.userId,
+                              )[0].name,
+                              activity: 'Request to join idea',
+                              requestDate: teamItem.createdDate,
+                            });
+                          }
+                        });
+                      });
+                      setTalentApprovalRequest(tempTalentApprovalTail);
+                      setSubmittedIdea(fixSubmittedIdea);
+                      setListUserData(listUser);
+                      setLoading({...loading, visible: false});
+                    },
+                  );
+                }),
+              )
+              .catch(errors => {
+                setLoading({...loading, visible: false});
+                setShowRefreshButton(true);
+                console.log(errors);
+              });
+          },
+        );
+      } else if (
+        res.status === 'SOMETHING_WRONG' ||
+        res.status === 'NOT_FOUND' ||
+        res.status === 'UNDEFINED_HEADER' ||
+        res.status === 'UNAUTHORIZED' ||
+        res.status === 'SERVER_ERROR'
+      ) {
+        setLoading({...loading, visible: false});
+        setShowRefreshButton(true);
+      }
+    });
+  };
 
   const showOnlyPendingStatus = () => {
     const tempTalentApproval = [];
@@ -142,6 +289,22 @@ const TalentApproval = ({navigation, route}) => {
     setTalentApprovalToShow(matchToFilter(talentApprovalRequest));
   }, [filterByStatusValue, filterByDateValue, talentApprovalRequest, onResume]);
 
+  useEffect(() => {
+    if (route.params?.refresh?.status) {
+      fetchIdeas();
+    }
+    if (route.params?.refresh?.status) {
+      navigation.setParams({
+        ...route.params,
+        refresh: {status: false},
+      });
+    }
+  }, [route.params?.refresh]);
+
+  useEffect(() => {
+    fetchIdeas();
+  }, []);
+
   return (
     <View style={styles.page}>
       <Header
@@ -149,7 +312,11 @@ const TalentApproval = ({navigation, route}) => {
         onBackPress={() => navigation.goBack()}
         backText="Back"
         title="Talent Approval"
-        onNotificationPress={() => navigation.navigate('Notification')}
+        onNotificationPress={() =>
+          navigation.navigate('Notification', {
+            userToken: route.params?.userToken,
+          })
+        }
       />
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -214,11 +381,14 @@ const TalentApproval = ({navigation, route}) => {
                   activity={item.activity}
                   status={item.status}
                   requestDate={item.requestDate}
-                  onViewPress={() =>
+                  onViewPress={() => {
                     navigation.navigate('TalentApprovalAction', {
                       approvalData: item,
-                    })
-                  }
+                      userToken: route.params?.userToken,
+                      listUserData: listUserData,
+                    });
+                    console.log(item);
+                  }}
                 />
               </>
             );
@@ -270,6 +440,15 @@ const TalentApproval = ({navigation, route}) => {
           />
         </View>
       </RBSheet>
+      <LoadingProcessFull visible={loading.visible} message={loading.message} />
+      <RefreshFull
+        visible={showRefreshBUtton}
+        onPress={() => {
+          setShowRefreshButton(false);
+          fetchIdeas();
+        }}
+        onOffsetTouch={() => navigation.goBack()}
+      />
     </View>
   );
 };

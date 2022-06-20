@@ -297,7 +297,43 @@ const CreateIdeaStep = ({navigation, route}) => {
                 '@PELENGKAP_DATA_IDEA',
                 res ? res.concat([data]) : [data],
               ).then(() => {
-                setMessageSuccessModalVisible(true);
+                getAsyncStorageObject('@NOTIFICATION').then(notification => {
+                  const invitation = idea.inviteUsers.filter(
+                    item => item.userId !== decodedJwt.data.id,
+                  );
+                  if (invitation.length > 0) {
+                    let newNotification = [];
+                    invitation.map(inviteItem => {
+                      newNotification.push({
+                        id: Math.floor(
+                          Math.random() *
+                            Math.floor(Math.random() * Date.now()),
+                        ).toString(),
+                        userTarget: inviteItem.userId,
+                        type: 'IDEA_INVITATION',
+                        openStatus: false,
+                        value: {
+                          ...inviteItem,
+                          ideaId: latestIdeaId.toString(),
+                          ideaName: idea.ideaDescription.title,
+                          status: 'Pending',
+                          createdDate: dateToText(dateCreated),
+                          approvedDate: dateToText(dateCreated),
+                        },
+                      });
+                    });
+                    storeAsyncStorageObject(
+                      '@NOTIFICATION',
+                      notification
+                        ? notification.concat(newNotification)
+                        : newNotification,
+                    ).then(() => {
+                      setMessageSuccessModalVisible(true);
+                    });
+                  } else {
+                    setMessageSuccessModalVisible(true);
+                  }
+                });
               });
             });
           } else if (
@@ -381,13 +417,14 @@ const CreateIdeaStep = ({navigation, route}) => {
         backButton
         onBackPress={() => cancelCreateIdea()}
         backText="Back"
-        onNotificationPress={() => {
-          if (edited) {
-            setMessageOpenNotificationRequestModalVisible(true);
-          } else {
-            navigation.replace('Notification');
-          }
-        }}
+        withNotification={false}
+        // onNotificationPress={() => {
+        //   if (edited) {
+        //     setMessageOpenNotificationRequestModalVisible(true);
+        //   } else {
+        //     navigation.replace('Notification');
+        //   }
+        // }}
       />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}

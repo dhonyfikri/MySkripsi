@@ -106,7 +106,11 @@ const TabNavigation = ({navigation, route}) => {
       <View style={{flex: 1}}>
         <Header
           withLogo
-          onNotificationPress={() => navigation.navigate('Notification')}
+          onNotificationPress={() =>
+            navigation.navigate('Notification', {
+              userToken: route.params?.userToken,
+            })
+          }
         />
         <Tab.Navigator
           backBehavior="initialRoute"

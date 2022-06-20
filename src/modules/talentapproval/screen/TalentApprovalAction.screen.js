@@ -34,19 +34,35 @@ import {colors} from '../../../utils/ColorsConfig/Colors';
 import fonts from '../../../utils/FontsConfig/Fonts';
 import DummyResponseDetailIdea from '../../riset/DummyResponseDetailIdea';
 import _ from 'lodash';
+import LoadingProcessFull from '../../../components/LoadingProcessFull';
+import RefreshFull from '../../../components/RefreshFull';
+import {GetDetailIdeaAPI} from '../../../config/RequestAPI/IdeaAPI';
+import {
+  getAsyncStorageObject,
+  storeAsyncStorageObject,
+} from '../../../utils/AsyncStorage/StoreAsyncStorage';
+import jwtDecode from 'jwt-decode';
+import {dateToText} from '../../../utils/DateConfig/DateConvert';
 
 const TalentApprovalAction = ({navigation, route}) => {
   const approvalData = route.params.approvalData;
-  const ideaData = _.cloneDeep(DummyResponseDetailIdea);
+  const decodedJwt = jwtDecode(route.params?.userToken.authToken);
+  // const ideaData = _.cloneDeep(DummyResponseDetailIdea);
 
   const refRBSheetComment = useRef();
 
+  const [ideaData, setIdeaData] = useState(undefined);
   const [finish, setFinish] = useState(false);
   const [activeIndexOfContent, setActiveIndexOfContent] = useState(0);
   const [approveMessage, setApproveMessage] = useState('');
   const [rejectMessage, setRejectMessage] = useState('');
   const [modalApproveVisible, setModalApproveVisible] = useState(false);
   const [modalRejectVisible, setModalRejectVisible] = useState(false);
+  const [loading, setLoading] = useState({
+    visible: true,
+    message: 'Please wait',
+  });
+  const [showRefreshBUtton, setShowRefreshButton] = useState(false);
   const [messageSuccessModalVisible, setMessageSuccessModalVisible] =
     useState(false);
   const [
@@ -88,29 +104,124 @@ const TalentApprovalAction = ({navigation, route}) => {
   const uniqueValueLC = [];
   const proposedSolutionLC = [];
 
-  ideaData.lc.map(res => {
-    if (res.field === 'customer') {
+  ideaData?.lc.map(res => {
+    if (res.field === 'customers') {
       customerLC.push(res.value);
     }
-    if (res.field === 'problem') problemLC.push(res.value);
-    if (res.field === 'earlyAdopter') earlyAdopterLC.push(res.value);
-    if (res.field === 'existingSolution') existingSolutionLC.push(res.value);
-    if (res.field === 'uniqueValue') uniqueValueLC.push(res.value);
-    if (res.field === 'proposedSolution') proposedSolutionLC.push(res.value);
+    if (res.field === 'problems') problemLC.push(res.value);
+    if (res.field === 'earlyAdopters') earlyAdopterLC.push(res.value);
+    if (res.field === 'existingSolutions') existingSolutionLC.push(res.value);
+    if (res.field === 'uniqueValues') uniqueValueLC.push(res.value);
+    if (res.field === 'proposedSolutions') proposedSolutionLC.push(res.value);
   });
+
+  const fetchIdeas = () => {
+    setLoading({...loading, visible: true, message: 'Please wait'});
+    setShowRefreshButton(false);
+    GetDetailIdeaAPI(
+      route.params?.userToken?.authToken,
+      route.params?.approvalData.ideaId,
+    ).then(res => {
+      getAsyncStorageObject('@PELENGKAP_DATA_IDEA').then(pelengkapIdeaItems => {
+        setLoading({...loading, visible: false});
+        handleFadeIn();
+        const pelengkapDataIdea = pelengkapIdeaItems.filter(
+          item => item.ideaId.toString() === res.data.id,
+        )[0];
+        if (res.status === 'SUCCESS') {
+          let fixData = null;
+          fixData = {
+            ...res.data,
+            // allowJoin: route.params?.allowJoin ? route.params?.allowJoin : '0',
+            files: pelengkapDataIdea ? pelengkapDataIdea.files : [],
+            approval: pelengkapDataIdea ? pelengkapDataIdea.teams : [],
+          };
+          fixData.desc[2].value = {
+            uri: pelengkapDataIdea?.cover.uri,
+            mime:
+              'image/' + pelengkapDataIdea?.cover.uri?.split('.')?.slice(-1)[0],
+            name: pelengkapDataIdea?.cover.uri?.split('/')?.slice(-1)[0],
+          };
+          setIdeaData(fixData);
+        } else if (res.status === 'SERVER_ERROR') {
+          setShowRefreshButton(true);
+        }
+      });
+    });
+  };
+
+  const approving = () => {
+    setLoading({...loading, visible: false, message: 'Approving'});
+    getAsyncStorageObject('@PELENGKAP_DATA_IDEA').then(res => {
+      const dataPelengkapIdea = res.filter(
+        item => item.ideaId.toString() === route.params?.approvalData.ideaId,
+      )[0];
+      const dataPelengkapTeamBefore = dataPelengkapIdea?.teams.filter(
+        item => item.id === route.params?.approvalData.id,
+      )[0];
+      dataPelengkapTeamBefore.approvedDate = dateToText(new Date());
+      dataPelengkapTeamBefore.status = 'Approved';
+      dataPelengkapIdea.teams = dataPelengkapIdea.teams
+        .filter(item => item.id !== route.params?.approvalData.id)
+        .concat([dataPelengkapTeamBefore]);
+      const dataPelengkapOtherIdea = res.filter(
+        item => item.ideaId.toString() !== route.params?.approvalData.ideaId,
+      );
+      console.log(dataPelengkapOtherIdea.concat([dataPelengkapIdea]));
+      storeAsyncStorageObject(
+        '@PELENGKAP_DATA_IDEA',
+        dataPelengkapOtherIdea.concat([dataPelengkapIdea]),
+      ).then(() => {
+        setLoading({...loading, visible: false});
+        setMessageSuccessModalVisible(true);
+      });
+    });
+  };
+
+  const rejecting = () => {
+    setLoading({...loading, visible: false, message: 'Rejecting'});
+    getAsyncStorageObject('@PELENGKAP_DATA_IDEA').then(res => {
+      const dataPelengkapIdea = res.filter(
+        item => item.ideaId.toString() === route.params?.approvalData.ideaId,
+      )[0];
+      const dataPelengkapTeamBefore = dataPelengkapIdea?.teams.filter(
+        item => item.id === route.params?.approvalData.id,
+      )[0];
+      dataPelengkapTeamBefore.status = 'Rejected';
+      dataPelengkapIdea.teams = dataPelengkapIdea.teams
+        .filter(item => item.id !== route.params?.approvalData.id)
+        .concat([dataPelengkapTeamBefore]);
+      const dataPelengkapOtherIdea = res.filter(
+        item => item.ideaId.toString() !== route.params?.approvalData.ideaId,
+      );
+      console.log(dataPelengkapOtherIdea.concat([dataPelengkapIdea]));
+      storeAsyncStorageObject(
+        '@PELENGKAP_DATA_IDEA',
+        dataPelengkapOtherIdea.concat([dataPelengkapIdea]),
+      ).then(() => {
+        setLoading({...loading, visible: false});
+        setMessageSuccessRejectModalVisible(true);
+      });
+    });
+  };
 
   useEffect(() => {
     handleFadeIn();
+    fetchIdeas();
   }, []);
 
   useEffect(() => {
     if (finish) {
-      navigation.goBack();
+      // navigation.goBack();
+      navigation.navigate('TalentApproval', {
+        userToken: route.params?.userToken,
+        refresh: {status: true},
+      });
     }
   }, [finish]);
 
   let commentCount = 0;
-  ideaData.comment.map(item => {
+  ideaData?.comment.map(item => {
     commentCount += 1;
     item.replyComment.map(() => {
       commentCount += 1;
@@ -136,8 +247,15 @@ const TalentApprovalAction = ({navigation, route}) => {
           onAcceptPress={() => setModalApproveVisible(true)}
         />
         <Gap height={24} />
-        <CardProfile withJoinButton={false} />
-        <Gap height={16} />
+        <CardProfile
+          userData={
+            route.params?.listUserData.filter(
+              item => item.id === decodedJwt.data.id,
+            )[0]
+          }
+          withJoinButton={false}
+        />
+        {/* <Gap height={16} />
         <View style={styles.interactions}>
           <TouchableOpacity style={styles.interactionsItem}>
             <IcUnactiveLike width={24} height={24} />
@@ -166,7 +284,7 @@ const TalentApprovalAction = ({navigation, route}) => {
           <TouchableOpacity>
             <IcEnvelope width={24} height={24} />
           </TouchableOpacity>
-        </View>
+        </View> */}
         <Gap height={24} />
         <View style={styles.tabContainer}>
           <TouchableOpacity
@@ -211,9 +329,9 @@ const TalentApprovalAction = ({navigation, route}) => {
           <Animated.View
             style={{...styles.dataSessionContainer, opacity: fadeAnim}}>
             <DetailIdeaDesc
-              title={ideaData.desc[0].value}
-              desc={ideaData.desc[2].value}
-              image={ideaData.desc[1].value}
+              title={ideaData?.desc[0].value}
+              desc={ideaData?.desc[1].value}
+              image={ideaData?.desc[2].value}
             />
           </Animated.View>
         )}
@@ -280,21 +398,28 @@ const TalentApprovalAction = ({navigation, route}) => {
             style={{...styles.dataSessionContainer, opacity: fadeAnim}}>
             {ideaData !== null &&
               (ideaData.approval.length > 0 ? (
-                ideaData.approval.map((item, index) => {
-                  return (
-                    <>
-                      <CardDetailTeamDesc
-                        no={index + 1}
-                        nama={item.approvalTo.name}
-                        nip={item.approvalTo.nik}
-                        unit={item.approvalTo.unitName}
-                      />
-                      {index !== ideaData.approval.length - 1 && (
-                        <Gap height={12} />
-                      )}
-                    </>
-                  );
-                })
+                ideaData.approval
+                  .filter(item => item.status === 'Approved')
+                  .map((team, index) => {
+                    const teamData = route.params?.listUserData.filter(
+                      item => item.id === team.userId,
+                    )[0];
+                    return (
+                      <>
+                        <CardDetailTeamDesc
+                          no={index + 1}
+                          nama={teamData?.name}
+                          nip={teamData?.nik}
+                          teamStructure={team.teamStructure}
+                          workLocation={teamData?.workingLocation}
+                          unit={teamData?.unit}
+                        />
+                        {index !== ideaData.approval.length - 1 && (
+                          <Gap height={12} />
+                        )}
+                      </>
+                    );
+                  })
               ) : (
                 <View
                   style={{
@@ -354,7 +479,7 @@ const TalentApprovalAction = ({navigation, route}) => {
           <View style={{flex: 1}}>
             <ScrollView showsVerticalScrollIndicator={false}>
               <FlatList
-                data={ideaData.comment}
+                data={ideaData?.comment}
                 keyExtractor={(_, index) => index.toString()}
                 scrollEnabled={false}
                 showsVerticalScrollIndicator={false}
@@ -501,7 +626,7 @@ const TalentApprovalAction = ({navigation, route}) => {
           onDiscardPress={() => setModalApproveVisible(false)}
           onSavePress={() => {
             setModalApproveVisible(false);
-            setMessageSuccessModalVisible(true);
+            approving();
           }}
         />
       </ModalAction>
@@ -562,7 +687,7 @@ const TalentApprovalAction = ({navigation, route}) => {
           onDiscardPress={() => setModalRejectVisible(false)}
           onSavePress={() => {
             setModalRejectVisible(false);
-            setMessageSuccessRejectModalVisible(true);
+            rejecting();
           }}
         />
       </ModalAction>
@@ -615,6 +740,15 @@ const TalentApprovalAction = ({navigation, route}) => {
           setMessageSuccessRejectModalVisible(false);
           setFinish(true);
         }}
+      />
+      <LoadingProcessFull visible={loading.visible} message={loading.message} />
+      <RefreshFull
+        visible={showRefreshBUtton}
+        onPress={() => {
+          setShowRefreshButton(false);
+          fetchIdeas();
+        }}
+        onOffsetTouch={() => navigation.goBack()}
       />
     </View>
   );

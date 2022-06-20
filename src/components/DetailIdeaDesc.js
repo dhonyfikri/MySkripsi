@@ -9,10 +9,10 @@ import {windowHeight} from './WindowDimensions';
 const DetailIdeaDesc = props => {
   return (
     <View>
-      {/* <View style={styles.imageWrap}>
-        <Image source={{uri: props.image}} style={styles.imageContent} />
+      <View style={styles.imageWrap}>
+        <Image source={{uri: props?.image?.uri}} style={styles.imageContent} />
       </View>
-      <Gap height={10} /> */}
+      <Gap height={10} />
       <Text style={styles.h2}>Title Idea</Text>
       <Divider stroke={1} />
       <Text style={styles.text(false)}>{props.title}</Text>
@@ -39,15 +39,15 @@ const styles = StyleSheet.create({
     lineHeight: 25.6,
     color: colors.text.primary,
   },
-  // imageWrap: {
-  //   borderWidth: 2,
-  //   borderRadius: 10,
-  //   marginBottom: 10,
-  // },
-  // imageContent: {
-  //   width: '100%',
-  //   height: windowHeight / 3,
-  //   borderRadius: 10,
-  //   resizeMode: 'cover',
-  // },
+  imageWrap: {
+    borderWidth: 2,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  imageContent: {
+    width: '100%',
+    height: windowHeight / 3.5,
+    borderRadius: 10,
+    resizeMode: 'cover',
+  },
 });

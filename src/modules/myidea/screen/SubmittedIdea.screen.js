@@ -350,7 +350,11 @@ const SubmittedIdea = ({navigation, route}) => {
         onBackPress={() => backToPreviousPage()}
         backText="Back"
         title="Submitted Idea"
-        onNotificationPress={() => navigation.navigate('Notification')}
+        onNotificationPress={() =>
+          navigation.navigate('Notification', {
+            userToken: route.params?.userToken,
+          })
+        }
       />
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -447,6 +451,7 @@ const SubmittedIdea = ({navigation, route}) => {
               onPress={() => {
                 refRBSheetAction.current.close();
                 navigation.navigate('EditIdea', {
+                  fromPage: 'SubmittedIdeaPage',
                   ideaId: selectedIdea.ideaId,
                   allowJoin: selectedIdea.allowJoin,
                   userToken: route.params?.userToken,
@@ -462,6 +467,7 @@ const SubmittedIdea = ({navigation, route}) => {
               onPress={() => {
                 refRBSheetAction.current.close();
                 navigation.navigate('EditIdea', {
+                  fromPage: 'SubmittedIdea',
                   ideaId: selectedIdea.ideaId,
                   allowJoin: selectedIdea.allowJoin,
                   userToken: route.params?.userToken,

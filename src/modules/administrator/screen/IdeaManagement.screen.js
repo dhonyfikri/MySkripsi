@@ -318,7 +318,11 @@ const IdeaManagement = ({navigation, route}) => {
         onBackPress={() => backToPreviousPage()}
         backText="Back"
         title="Idea Management"
-        onNotificationPress={() => navigation.navigate('Notification')}
+        onNotificationPress={() =>
+          navigation.navigate('Notification', {
+            userToken: route.params?.userToken,
+          })
+        }
       />
       <ScrollView
         showsVerticalScrollIndicator={false}
