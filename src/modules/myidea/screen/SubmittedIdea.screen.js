@@ -305,13 +305,17 @@ const SubmittedIdea = ({navigation, route}) => {
 
   const backToPreviousPage = () => {
     if (isChanged) {
-      navigation.navigate('TabNavigation', {
-        screen: 'Profile',
-        params: {
-          userToken: route.params?.userToken,
-          refresh: {status: true},
+      navigation.navigate(
+        'TabNavigation',
+        {userToken: route.params?.userToken},
+        {
+          screen: 'Profile',
+          params: {
+            userToken: route.params?.userToken,
+            refresh: {status: true},
+          },
         },
-      });
+      );
     } else {
       navigation.goBack();
     }
@@ -451,7 +455,7 @@ const SubmittedIdea = ({navigation, route}) => {
               onPress={() => {
                 refRBSheetAction.current.close();
                 navigation.navigate('EditIdea', {
-                  fromPage: 'SubmittedIdeaPage',
+                  fromPage: 'SubmittedIdea',
                   ideaId: selectedIdea.ideaId,
                   allowJoin: selectedIdea.allowJoin,
                   userToken: route.params?.userToken,

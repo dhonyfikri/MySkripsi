@@ -953,7 +953,7 @@ const ExploreContent = ({navigation, route}) => {
               keyExtractor={(_, index) => index.toString()}
               scrollEnabled={false}
               showsVerticalScrollIndicator={false}
-              inverted={true}
+              inverted={false}
               renderItem={({item, index}) => (
                 <CardContentNew
                   ideaId={item.id}

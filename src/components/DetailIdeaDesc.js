@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   imageWrap: {
-    borderWidth: 2,
+    borderWidth: 0,
     borderRadius: 10,
     marginBottom: 10,
   },

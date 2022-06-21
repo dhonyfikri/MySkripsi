@@ -21,6 +21,10 @@ import SplashScreen from '../../modules/splash/screen/Splash.screen';
 import TalentApproval from '../../modules/talentapproval/screen/TalentApproval.screen';
 import TalentApprovalAction from '../../modules/talentapproval/screen/TalentApprovalAction.screen';
 import TermCondi from '../../modules/termcondi/screen/TermCondi.screen';
+import CriteriaManagement from '../../modules/administrator/screen/CriteriaManagement.screen';
+import PromotionManagement from '../../modules/administrator/screen/PromotionManagement';
+import CriteriaPreferenceSetter from '../../modules/administrator/screen/CriteriaPreferenceSetter.screen';
+import ResultRank from '../../modules/administrator/screen/ResultRank.screen';
 
 const Stack = createNativeStackNavigator();
 
@@ -117,6 +121,26 @@ const Routes = () => {
       <Stack.Screen
         name="IdeaManagement"
         component={IdeaManagement}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="PromotionManagement"
+        component={PromotionManagement}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="CriteriaPreferenceSetter"
+        component={CriteriaPreferenceSetter}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="ResultRank"
+        component={ResultRank}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="CriteriaManagement"
+        component={CriteriaManagement}
         options={{headerShown: false}}
       />
       <Stack.Screen

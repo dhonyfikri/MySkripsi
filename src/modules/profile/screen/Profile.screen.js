@@ -312,18 +312,18 @@ const Profile = ({navigation, route}) => {
                       }),
                   },
                   {
-                    itemTitle: 'Event Management',
-                    // onPress: () =>
-                    //   navigation.navigate('SubmittedIdea', {
-                    //     userToken: route.params?.userToken,
-                    //   }),
+                    itemTitle: 'Promotion Management',
+                    onPress: () =>
+                      navigation.navigate('PromotionManagement', {
+                        userToken: route.params?.userToken,
+                      }),
                   },
                   {
-                    itemTitle: 'Talent Management',
-                    // onPress: () =>
-                    //   navigation.navigate('SubmittedIdea', {
-                    //     userToken: route.params?.userToken,
-                    //   }),
+                    itemTitle: 'Criteria Management',
+                    onPress: () =>
+                      navigation.navigate('CriteriaManagement', {
+                        userToken: route.params?.userToken,
+                      }),
                   },
                   {
                     itemTitle: 'Category Management',
@@ -343,8 +343,8 @@ const Profile = ({navigation, route}) => {
               itemTitle: 'FAQ',
               // onPress: () => console.log('FAQ Clicked'),
               onPress: () => {
-                getAsyncStorageObject('@PELENGKAP_DATA_IDEA').then(res =>
-                  console.log(res[0]),
+                getAsyncStorageObject('@PROMOTION_DATA').then(res =>
+                  console.log(res),
                 );
               },
             }}
