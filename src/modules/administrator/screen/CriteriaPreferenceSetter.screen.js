@@ -87,7 +87,8 @@ const CriteriaPreferenceSetter = ({navigation, route}) => {
     return transpose;
   };
 
-  const criteriaIteration = (fullAHP = false) => {
+  const criteriaIteration = async (fullAHP = false, multipleData = 1) => {
+    var t0 = performance.now();
     setLoading({...loading, visible: true});
     const rataRata = ahpIteratingCustom(
       [
@@ -108,9 +109,9 @@ const CriteriaPreferenceSetter = ({navigation, route}) => {
       ],
     );
 
-    console.log(rataRata.rataRata);
-    console.log(rataRata.consistentValue);
-    console.log(rataRata.konsisten);
+    // console.log(rataRata.rataRata);
+    // console.log(rataRata.consistentValue);
+    // console.log(rataRata.konsisten);
 
     const bobotKriteriaKeterbaruan = rataRata.rataRata[0];
 
@@ -238,7 +239,11 @@ const CriteriaPreferenceSetter = ({navigation, route}) => {
     if (statusKonsistensi) {
       const BC = [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
       let norm = null;
-      const ideasValues = route.params?.ideasValues;
+      let ideasValues = [];
+      for (let i = 0; i < multipleData; i++) {
+        ideasValues = ideasValues.concat(route.params?.ideasValues);
+      }
+
       for (let i = 0; i < ideasValues.length; i++) {
         if (i === 0) {
           norm = [...ideasValues[i]];
@@ -306,8 +311,18 @@ const CriteriaPreferenceSetter = ({navigation, route}) => {
         scoreList.push(tempScore);
       });
 
+      // let ideasValues = [];
+      // for (let i = 0; i < multipleData; i++) {
+      //   ideasValues = ideasValues.concat(route.params?.ideasValues);
+      // }
+
+      let originalIdea = [];
+      for (let i = 0; i < multipleData; i++) {
+        originalIdea = originalIdea.concat(route.params?.ideaDataList);
+      }
+
       let result = [];
-      route.params?.ideaDataList.map((ideaData, index) => {
+      originalIdea.map((ideaData, index) => {
         result.push({
           ...ideaData,
           score: scoreList[index],
@@ -330,6 +345,8 @@ const CriteriaPreferenceSetter = ({navigation, route}) => {
       )} - ${parseFloat(rataRataSubLeanCanvas.consistentValue.toFixed(3))}`,
     );
     setLoading({...loading, visible: false});
+    var t1 = performance.now();
+    console.log('Call to doSomething took ' + (t1 - t0) + ' milliseconds.');
   };
 
   const validatingValue = () => {
