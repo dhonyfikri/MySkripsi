@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import Gap from '../../../components/Gap';
 import Header from '../../../components/Header';
 import LoadingProcessFull from '../../../components/LoadingProcessFull';
 import RefreshFull from '../../../components/RefreshFull';
@@ -377,21 +378,46 @@ const PromotionManagement = ({navigation, route}) => {
         />
       </ScrollView>
       <View style={styles.actionButtonContainer}>
-        <TouchableOpacity
-          disabled={ideasValues.length === 0}
-          style={styles.actionButton(
-            ideasValues.length > 0 ? 'finish' : 'finishDisabled',
-          )}
-          onPress={() => {
-            navigation.navigate('CriteriaPreferenceSetter', {
-              userToken: route.params?.userToken,
-              ideaDataList: ideaDataList,
-              ideasValues: ideasValues,
-              listUserData: listUserData,
-            });
+        <Text>Type Comparison Criteria</Text>
+        <Gap height={8} />
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'center',
+            alignItems: 'center',
           }}>
-          <Text style={styles.actionButtonText('finish')}>Next</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            disabled={ideasValues.length === 0}
+            style={styles.actionButton(
+              ideasValues.length > 0 ? 'finish' : 'finishDisabled',
+            )}
+            onPress={() => {
+              navigation.navigate('CriteriaPreferenceSetterDefault', {
+                userToken: route.params?.userToken,
+                ideaDataList: ideaDataList,
+                ideasValues: ideasValues,
+                listUserData: listUserData,
+              });
+            }}>
+            <Text style={styles.actionButtonText('finish')}>Pair</Text>
+          </TouchableOpacity>
+          <Gap width={8} />
+          <TouchableOpacity
+            disabled={ideasValues.length === 0}
+            style={styles.actionButton(
+              ideasValues.length > 0 ? 'finish' : 'finishDisabled',
+            )}
+            onPress={() => {
+              navigation.navigate('CriteriaPreferenceSetter', {
+                userToken: route.params?.userToken,
+                ideaDataList: ideaDataList,
+                ideasValues: ideasValues,
+                listUserData: listUserData,
+              });
+            }}>
+            <Text style={styles.actionButtonText('finish')}>Direct</Text>
+          </TouchableOpacity>
+        </View>
       </View>
       <LoadingProcessFull visible={loading.visible} message={loading.message} />
       <RefreshFull
@@ -410,18 +436,16 @@ export default PromotionManagement;
 
 const styles = StyleSheet.create({
   actionButtonContainer: {
-    height: 76,
-    padding: 16,
+    height: 90,
+    padding: 8,
     borderTopWidth: 1,
     borderTopColor: colors.border,
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
     alignItems: 'center',
   },
   actionButton: (type = 'discard') => ({
     width: 102,
     paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     alignItems: 'center',
     borderWidth: type === 'discard' ? 1 : 0,
     borderColor: type === 'finishDisabled' ? colors.border : colors.primary,
@@ -437,7 +461,7 @@ const styles = StyleSheet.create({
   }),
   actionButtonText: (type = 'discard') => ({
     fontFamily: fonts.secondary[600],
-    fontSize: 16,
+    fontSize: 14,
     lineHeight: 20,
     color:
       type === 'discard'

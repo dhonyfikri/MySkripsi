@@ -18,10 +18,27 @@ const CardMyIdeas = ({myIdeas = [], showAll = false, showLimit = 2}) => {
             }}>
             <View style={styles.main}>
               {/* <Image style={styles.picture} source={item.picture} /> */}
-              <Image
-                style={styles.picture}
-                source={require('../assets/image/img_dummy_my_idea_1.png')}
-              />
+              <View
+                style={{
+                  width: 100,
+                  height: 100,
+                  borderRadius: 6,
+                  overflow: 'hidden',
+                }}>
+                <Image
+                  style={{
+                    ...styles.picture,
+                    position: 'absolute',
+                    left: 0,
+                    right: 0,
+                  }}
+                  source={require('../assets/image/img_dummy_my_idea_1.png')}
+                />
+                <Image
+                  style={{...styles.picture, width: '100%', height: '100%'}}
+                  source={item.desc[2].value}
+                />
+              </View>
               <Gap width={12} />
               <Text numberOfLines={4} style={styles.title}>
                 {item.desc[0].value}

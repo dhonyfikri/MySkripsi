@@ -4,7 +4,7 @@ const ahpIteratingCustom = (criteria = [], activeStatus) => {
     1.59,
   ];
 
-  let activeIndex = new Array(criteria.length).fill(true);
+  let activeIndex = new Array(criteria.length).fill(1);
   if (
     activeStatus !== null &&
     activeStatus !== undefined &&
@@ -13,7 +13,7 @@ const ahpIteratingCustom = (criteria = [], activeStatus) => {
     activeIndex = activeStatus;
   }
 
-  const kriteria = criteria.filter((_, index) => activeIndex[index] === true);
+  const kriteria = [...criteria];
   const jumlahKriteria = kriteria.length;
   let totalNilaiKriteria = 0;
   kriteria.map(item => {
@@ -62,14 +62,7 @@ const ahpIteratingCustom = (criteria = [], activeStatus) => {
 
   const ci = (pev - kriteria.length) / (kriteria.length - 1);
 
-  let cr = 0;
-  if (kriteria.length > 2) {
-    if (kriteria.length <= 15) {
-      cr = ci / ri[kriteria.length - 1];
-    } else {
-      cr = ci / ri.slice(-1)[0];
-    }
-  }
+  const cr = ci / ri[kriteria.length - 1];
 
   // console.log('Jumlah kriteria =', jumlahKriteria);
   // console.log('Total nilai kriteria =', totalNilaiKriteria);
@@ -85,22 +78,8 @@ const ahpIteratingCustom = (criteria = [], activeStatus) => {
   // console.log('PEV =', pev);
   // console.log('CI =', ci);
   // console.log('CR =', cr);
-
-  const fixRataRata = [];
-  let rataRataReadPointer = 0;
-  for (let i = 0; i < activeIndex.length; i++) {
-    if (activeIndex[i] === true) {
-      fixRataRata.push(rataRata[rataRataReadPointer]);
-      rataRataReadPointer += 1;
-    } else {
-      fixRataRata.push(0);
-    }
-  }
-
-  // console.log(fixRataRata);
-
   return {
-    rataRata: fixRataRata,
+    rataRata: rataRata,
     konsisten: cr <= 0.1 || jumlahKriteria <= 2,
     consistentValue: cr,
   };

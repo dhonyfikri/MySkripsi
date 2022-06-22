@@ -3,39 +3,27 @@ import React from 'react';
 import Slider from '@react-native-community/slider';
 import {colors} from '../utils/ColorsConfig/Colors';
 import fonts from '../utils/FontsConfig/Fonts';
-import BouncyCheckbox from 'react-native-bouncy-checkbox';
 import Gap from './Gap';
 
-const CheckBoxBouncy = ({isChecked, onPress = () => {}}) => {
-  return (
-    <BouncyCheckbox
-      size={20}
-      fillColor={colors.primary}
-      unfillColor={colors.white}
-      disableBuiltInState
-      iconStyle={{
-        borderColor: isChecked ? colors.primary : colors.divider,
-        borderRadius: 6,
-        marginRight: -15,
-      }}
-      onPress={() => onPress(!isChecked)}
-      isChecked={isChecked}
-      style={{
-        marginRight: 0,
-        alignSelf: 'flex-end',
-      }}
-    />
-  );
-};
-
-const CardSlideSingleValueSetter = ({
+const CardSlideDoubleValueSetter = ({
   tingkatHierarki = 0,
-  title,
-  value,
-  isActive,
-  onCbPress = () => {},
+  titleLeft = 'value1',
+  titleRight = 'value2',
+  value = -8,
   onValueChange = () => {},
 }) => {
+  let valueLeft = 0;
+  let valueRight = 0;
+  if (value === 0) {
+    valueLeft = 1;
+    valueRight = 1;
+  } else if (value < 0) {
+    valueLeft = parseFloat((1 / (value * -1 + 1)).toFixed(3));
+    valueRight = value * -1 + 1;
+  } else {
+    valueLeft = value + 1;
+    valueRight = parseFloat((1 / (value + 1)).toFixed(3));
+  }
   return (
     <View
       style={{
@@ -43,26 +31,48 @@ const CardSlideSingleValueSetter = ({
         paddingHorizontal: 16,
         backgroundColor: colors.secondary,
         borderRadius: 8,
-        marginRight: 70 * tingkatHierarki,
+        marginRight: 40 * tingkatHierarki,
       }}>
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-        }}>
-        <CheckBoxBouncy isChecked={isActive} onPress={res => onCbPress(res)} />
+      <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+        <Text
+          style={{
+            fontFamily: fonts.secondary[500],
+            fontSize: 15,
+            color: colors.text.primary,
+          }}>
+          {titleLeft}
+        </Text>
         <Gap width={16} />
         <Text
           style={{
             fontFamily: fonts.secondary[500],
             fontSize: 15,
-            lineHeight: 18,
             color: colors.text.primary,
           }}>
-          {title}
+          {titleRight}
         </Text>
       </View>
       <View style={{flexDirection: 'row', alignItems: 'center'}}>
+        <View
+          style={{
+            backgroundColor:
+              tingkatHierarki === 0 ? colors.primary : colors.success,
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: 4,
+            borderRadius: 8,
+            width: 60,
+            height: 30,
+          }}>
+          <Text
+            style={{
+              fontFamily: fonts.secondary[500],
+              fontSize: 15,
+              color: colors.white,
+            }}>
+            {valueLeft}
+          </Text>
+        </View>
         <View style={{flex: 1}}>
           <Slider
             value={value}
@@ -72,13 +82,15 @@ const CardSlideSingleValueSetter = ({
               padding: 0,
             }}
             thumbTintColor={colors.pending}
-            minimumValue={0}
+            minimumValue={-8}
             step={1}
-            maximumValue={100}
+            maximumValue={8}
             minimumTrackTintColor={
               tingkatHierarki === 0 ? colors.primary : colors.success
             }
-            maximumTrackTintColor={colors.border}
+            maximumTrackTintColor={
+              tingkatHierarki === 0 ? colors.reject : colors.danger
+            }
             onValueChange={res => onValueChange(res)}
           />
         </View>
@@ -99,7 +111,7 @@ const CardSlideSingleValueSetter = ({
               fontSize: 15,
               color: colors.white,
             }}>
-            {value}
+            {valueRight}
           </Text>
         </View>
       </View>
@@ -107,6 +119,6 @@ const CardSlideSingleValueSetter = ({
   );
 };
 
-export default CardSlideSingleValueSetter;
+export default CardSlideDoubleValueSetter;
 
 const styles = StyleSheet.create({});

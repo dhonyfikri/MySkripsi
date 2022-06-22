@@ -21,6 +21,37 @@ const CriteriaPreferenceSetter = ({navigation, route}) => {
     message: 'Please wait',
   });
 
+  const [isKonsisten, setIsKonsisten] = useState(null);
+  const [indikatorKonsisten, setIndikatorKonsisten] = useState('');
+
+  const [keterbaruanActiveStatus, setKeterbaruanActiveStatus] = useState(true);
+  const [trendingActiveStatus, setTrendingActiveStatus] = useState(true);
+  const [profilKreatorActiveStatus, setProfilKreatorActiveStatus] =
+    useState(true);
+  const [leanCanvasActiveStatus, setLeanCanvasActiveStatus] = useState(true);
+  const [teamActiveStatus, setTeamActiveStatus] = useState(true);
+  const [attachmentActiveStatus, setAttachmentActiveStatus] = useState(true);
+
+  const [jumLikeActiveStatus, setJumLikeActiveStatus] = useState(true);
+  const [jumKomentarActiveStatus, setJumKomentarActiveStatus] = useState(true);
+  const [bounceRateActiveStatus, setBounceRateActiveStatus] = useState(true);
+
+  const [jumIdeActiveStatus, setJumIdeActiveStatus] = useState(true);
+  const [perLikeActiveStatus, setPerLikeActiveStatus] = useState(true);
+  const [perKomentarActiveStatus, setPerKomentarActiveStatus] = useState(true);
+  const [jumAchievementActiveStatus, setJumAchievementActiveStatus] =
+    useState(true);
+
+  const [customerActiveStatus, setCustomerActiveStatus] = useState(true);
+  const [problemActiveStatus, setProblemActiveStatus] = useState(true);
+  const [earlyAdopterActiveStatus, setEarlyAdopterActiveStatus] =
+    useState(true);
+  const [existingSolutionActiveStatus, setExistingSolutionActiveStatus] =
+    useState(true);
+  const [uniqueValueActiveStatus, setUniqueValueActiveStatus] = useState(true);
+  const [proposedSolutionActiveStatus, setProposedSolutionActiveStatus] =
+    useState(true);
+
   const [valueKeterbaruan, setValueKeterbaruan] = useState(50);
   const [valueTrending, setValueTrending] = useState(50);
   const [valueProfilKreator, setValueProfilKreator] = useState(50);
@@ -58,70 +89,99 @@ const CriteriaPreferenceSetter = ({navigation, route}) => {
 
   const criteriaIteration = (fullAHP = false) => {
     setLoading({...loading, visible: true});
-    const rataRata = ahpIteratingCustom([
-      valueKeterbaruan,
-      valueTrending,
-      valueProfilKreator,
-      valueLeanCanvas,
-      valueJumlahTeam,
-      valueJumlahAttachment,
-    ]).rataRata;
+    const rataRata = ahpIteratingCustom(
+      [
+        valueKeterbaruan,
+        valueTrending,
+        valueProfilKreator,
+        valueLeanCanvas,
+        valueJumlahTeam,
+        valueJumlahAttachment,
+      ],
+      [
+        keterbaruanActiveStatus,
+        trendingActiveStatus,
+        profilKreatorActiveStatus,
+        leanCanvasActiveStatus,
+        teamActiveStatus,
+        attachmentActiveStatus,
+      ],
+    );
 
-    const rataRataSubKeterbaruan = ahpIteratingCustom([
-      valueKeterbaruan,
-    ]).rataRata;
-    const bobotKriteriaKeterbaruan = rataRataSubKeterbaruan[0] * rataRata[0];
+    console.log(rataRata.rataRata);
+    console.log(rataRata.consistentValue);
+    console.log(rataRata.konsisten);
 
-    const rataRataSubTrending = ahpIteratingCustom([
-      valueLike,
-      valueComment,
-      valueBounceRate,
-    ]).rataRata;
-    const bobotKriteriaLike = rataRataSubTrending[0] * rataRata[1];
-    const bobotKriteriaComment = rataRataSubTrending[1] * rataRata[1];
-    const bobotKriteriaBounceRate = rataRataSubTrending[2] * rataRata[1];
+    const bobotKriteriaKeterbaruan = rataRata.rataRata[0];
 
-    const rataRataSubProfilKreator = ahpIteratingCustom([
-      valueJumlahIde,
-      valuePerolehanLike,
-      valuePerolehanKomentar,
-      valueJumlahAchievement,
-    ]).rataRata;
-    const bobotKriteriaJumlahIde = rataRataSubProfilKreator[0] * rataRata[2];
+    const rataRataSubTrending = ahpIteratingCustom(
+      [valueLike, valueComment, valueBounceRate],
+      [jumLikeActiveStatus, jumKomentarActiveStatus, bounceRateActiveStatus],
+    );
+    const bobotKriteriaLike =
+      rataRataSubTrending.rataRata[0] * rataRata.rataRata[1];
+    const bobotKriteriaComment =
+      rataRataSubTrending.rataRata[1] * rataRata.rataRata[1];
+    const bobotKriteriaBounceRate =
+      rataRataSubTrending.rataRata[2] * rataRata.rataRata[1];
+
+    const rataRataSubProfilKreator = ahpIteratingCustom(
+      [
+        valueJumlahIde,
+        valuePerolehanLike,
+        valuePerolehanKomentar,
+        valueJumlahAchievement,
+      ],
+      [
+        jumIdeActiveStatus,
+        perLikeActiveStatus,
+        perKomentarActiveStatus,
+        jumAchievementActiveStatus,
+      ],
+    );
+    const bobotKriteriaJumlahIde =
+      rataRataSubProfilKreator.rataRata[0] * rataRata.rataRata[2];
     const bobotKriteriaPerolehanLike =
-      rataRataSubProfilKreator[1] * rataRata[2];
+      rataRataSubProfilKreator.rataRata[1] * rataRata.rataRata[2];
     const bobotKriteriaPerolehanKomentar =
-      rataRataSubProfilKreator[2] * rataRata[2];
+      rataRataSubProfilKreator.rataRata[2] * rataRata.rataRata[2];
     const bobotKriteriaJumlahAchievement =
-      rataRataSubProfilKreator[3] * rataRata[2];
+      rataRataSubProfilKreator.rataRata[3] * rataRata.rataRata[2];
 
-    const rataRataSubLeanCanvas = ahpIteratingCustom([
-      valueCustomer,
-      valueProblem,
-      valueEarlyAdopter,
-      valueExistingSolution,
-      valueUniqueValue,
-      valueProposedSolution,
-    ]).rataRata;
-    const bobotKriteriaCustomer = rataRataSubLeanCanvas[0] * rataRata[3];
-    const bobotKriteriaProblem = rataRataSubLeanCanvas[1] * rataRata[3];
-    const bobotKriteriaEarlyAdopter = rataRataSubLeanCanvas[2] * rataRata[3];
+    const rataRataSubLeanCanvas = ahpIteratingCustom(
+      [
+        valueCustomer,
+        valueProblem,
+        valueEarlyAdopter,
+        valueExistingSolution,
+        valueUniqueValue,
+        valueProposedSolution,
+      ],
+      [
+        customerActiveStatus,
+        problemActiveStatus,
+        earlyAdopterActiveStatus,
+        existingSolutionActiveStatus,
+        uniqueValueActiveStatus,
+        proposedSolutionActiveStatus,
+      ],
+    );
+    const bobotKriteriaCustomer =
+      rataRataSubLeanCanvas.rataRata[0] * rataRata.rataRata[3];
+    const bobotKriteriaProblem =
+      rataRataSubLeanCanvas.rataRata[1] * rataRata.rataRata[3];
+    const bobotKriteriaEarlyAdopter =
+      rataRataSubLeanCanvas.rataRata[2] * rataRata.rataRata[3];
     const bobotKriteriaExistingSolution =
-      rataRataSubLeanCanvas[3] * rataRata[3];
-    const bobotKriteriaUniqueValue = rataRataSubLeanCanvas[4] * rataRata[3];
+      rataRataSubLeanCanvas.rataRata[3] * rataRata.rataRata[3];
+    const bobotKriteriaUniqueValue =
+      rataRataSubLeanCanvas.rataRata[4] * rataRata.rataRata[3];
     const bobotKriteriaProposedSolution =
-      rataRataSubLeanCanvas[5] * rataRata[3];
+      rataRataSubLeanCanvas.rataRata[5] * rataRata.rataRata[3];
 
-    const rataRataSubJumlahTeam = ahpIteratingCustom([
-      valueJumlahTeam,
-    ]).rataRata;
-    const bobotKriteriaJumlahTeam = rataRataSubJumlahTeam[0] * rataRata[4];
+    const bobotKriteriaJumlahTeam = rataRata.rataRata[4];
 
-    const rataRataSubJumlahAttachment = ahpIteratingCustom([
-      valueJumlahAttachment,
-    ]).rataRata;
-    const bobotKriteriaJumlahAttachment =
-      rataRataSubJumlahAttachment[0] * rataRata[5];
+    const bobotKriteriaJumlahAttachment = rataRata.rataRata[5];
 
     // const bobotTotal =
     //   bobotKriteriaKeterbaruan +
@@ -161,94 +221,115 @@ const CriteriaPreferenceSetter = ({navigation, route}) => {
       bobotKriteriaJumlahAttachment,
     ];
 
-    console.log(pembobotan);
+    // console.log(pembobotan);
 
-    const BC = [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
-    let norm = null;
-    const ideasValues = route.params?.ideasValues;
-    for (let i = 0; i < ideasValues.length; i++) {
-      if (i === 0) {
-        norm = [...ideasValues[i]];
-      } else {
-        for (let j = 0; j < ideasValues[i].length; j++) {
-          if (BC[j] === 0) {
-            if (ideasValues[i][j] < norm[j]) {
-              norm[j] = ideasValues[i][j];
-            }
-          } else {
-            if (ideasValues[i][j] > norm[j]) {
-              norm[j] = ideasValues[i][j];
+    let statusKonsistensi = true;
+    if (
+      !rataRata.konsisten ||
+      !rataRataSubTrending.konsisten ||
+      !rataRataSubProfilKreator.konsisten ||
+      !rataRataSubLeanCanvas.konsisten
+    ) {
+      statusKonsistensi = false;
+    }
+
+    setIsKonsisten(statusKonsistensi);
+
+    if (statusKonsistensi) {
+      const BC = [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
+      let norm = null;
+      const ideasValues = route.params?.ideasValues;
+      for (let i = 0; i < ideasValues.length; i++) {
+        if (i === 0) {
+          norm = [...ideasValues[i]];
+        } else {
+          for (let j = 0; j < ideasValues[i].length; j++) {
+            if (BC[j] === 0) {
+              if (ideasValues[i][j] < norm[j]) {
+                norm[j] = ideasValues[i][j];
+              }
+            } else {
+              if (ideasValues[i][j] > norm[j]) {
+                norm[j] = ideasValues[i][j];
+              }
             }
           }
         }
       }
-    }
 
-    let afterNorm = [];
-    for (let i = 0; i < ideasValues.length; i++) {
-      afterNorm.push([]);
-      for (let j = 0; j < ideasValues[i].length; j++) {
-        if (BC[j] === 0) {
-          afterNorm[i].push(
-            parseFloat((norm[j] / ideasValues[i][j]).toFixed(4)),
-          );
-        } else {
-          afterNorm[i].push(
-            parseFloat((ideasValues[i][j] / norm[j]).toFixed(4)),
-          );
+      let afterNorm = [];
+      for (let i = 0; i < ideasValues.length; i++) {
+        afterNorm.push([]);
+        for (let j = 0; j < ideasValues[i].length; j++) {
+          if (BC[j] === 0) {
+            afterNorm[i].push(
+              parseFloat((norm[j] / ideasValues[i][j]).toFixed(4)),
+            );
+          } else {
+            afterNorm[i].push(
+              parseFloat((ideasValues[i][j] / norm[j]).toFixed(4)),
+            );
+          }
         }
       }
-    }
 
-    if (fullAHP) {
-      // const aa = [
-      //   [1, 2, 3, 4],
-      //   [5, 6, 7, 8],
-      //   [9, 10, 11, 12],
-      // ];
-      // const transposeAa = arrayTranspose([...aa]);
-      // const iteratedAa = [];
-      // for (let i = 0; i < transposeAa.length; i++) {
-      //   iteratedAa.push(ahpIteratingCustom(transposeAa[i]).rataRata);
-      // }
-      // console.log(iteratedAa);
-      // console.log(arrayTranspose([...iteratedAa]));
+      if (fullAHP) {
+        // const aa = [
+        //   [1, 2, 3, 4],
+        //   [5, 6, 7, 8],
+        //   [9, 10, 11, 12],
+        // ];
+        // const transposeAa = arrayTranspose([...aa]);
+        // const iteratedAa = [];
+        // for (let i = 0; i < transposeAa.length; i++) {
+        //   iteratedAa.push(ahpIteratingCustom(transposeAa[i]).rataRata);
+        // }
+        // console.log(iteratedAa);
+        // console.log(arrayTranspose([...iteratedAa]));
 
-      const transposedAfterNorm = arrayTranspose([...afterNorm]);
-      const iteratedTransposedAfterNorm = [];
-      for (let i = 0; i < transposedAfterNorm.length; i++) {
-        iteratedTransposedAfterNorm.push(
-          ahpIteratingCustom(transposedAfterNorm[i]).rataRata,
-        );
+        const transposedAfterNorm = arrayTranspose([...afterNorm]);
+        const iteratedTransposedAfterNorm = [];
+        for (let i = 0; i < transposedAfterNorm.length; i++) {
+          iteratedTransposedAfterNorm.push(
+            ahpIteratingCustom(transposedAfterNorm[i]).rataRata,
+          );
+        }
+        afterNorm = arrayTranspose([...iteratedTransposedAfterNorm]);
       }
-      afterNorm = arrayTranspose([...iteratedTransposedAfterNorm]);
+
+      const scoreList = [];
+      afterNorm.map(item => {
+        let tempScore = 0;
+        item.map((item2, index2) => {
+          tempScore = tempScore + item2 * pembobotan[index2];
+        });
+        scoreList.push(tempScore);
+      });
+
+      let result = [];
+      route.params?.ideaDataList.map((ideaData, index) => {
+        result.push({
+          ...ideaData,
+          score: scoreList[index],
+          pembobotan: pembobotan,
+          normValue: afterNorm[index],
+        });
+      });
+
+      result = result.sort((a, b) => {
+        return b.score - a.score;
+      });
+      setRankingResult(result);
     }
 
-    const scoreList = [];
-    afterNorm.map(item => {
-      let tempScore = 0;
-      item.map((item2, index2) => {
-        tempScore = tempScore + item2 * pembobotan[index2];
-      });
-      scoreList.push(tempScore);
-    });
-
-    let result = [];
-    route.params?.ideaDataList.map((ideaData, index) => {
-      result.push({
-        ...ideaData,
-        score: scoreList[index],
-        pembobotan: pembobotan,
-        normValue: afterNorm[index],
-      });
-    });
-
-    result = result.sort((a, b) => {
-      return b.score - a.score;
-    });
-
+    setIndikatorKonsisten(
+      `${parseFloat(rataRata.consistentValue.toFixed(3))} - ${parseFloat(
+        rataRataSubTrending.consistentValue.toFixed(3),
+      )} - ${parseFloat(
+        rataRataSubProfilKreator.consistentValue.toFixed(3),
+      )} - ${parseFloat(rataRataSubLeanCanvas.consistentValue.toFixed(3))}`,
+    );
     setLoading({...loading, visible: false});
-    setRankingResult(result);
   };
 
   const validatingValue = () => {
@@ -262,9 +343,6 @@ const CriteriaPreferenceSetter = ({navigation, route}) => {
         valueJumlahAttachment ===
       0
     ) {
-      isValid = false;
-    }
-    if (valueKeterbaruan === 0) {
       isValid = false;
     }
     if (valueLike + valueComment + valueBounceRate === 0) {
@@ -290,18 +368,12 @@ const CriteriaPreferenceSetter = ({navigation, route}) => {
     ) {
       isValid = false;
     }
-    if (valueJumlahTeam === 0) {
-      isValid = false;
-    }
-    if (valueJumlahAttachment === 0) {
-      isValid = false;
-    }
     return isValid;
   };
 
-  const iteratingTimeTest = (fullAhp = false) => {
+  const iteratingTimeTest = async (fullAhp = false) => {
     var t0 = performance.now();
-    for (let i = 0; i < 1000; i++) {
+    for (let i = 0; i < 10000; i++) {
       criteriaIteration(fullAhp);
     }
     var t1 = performance.now();
@@ -324,116 +396,175 @@ const CriteriaPreferenceSetter = ({navigation, route}) => {
           title="Keterbaruan"
           value={valueKeterbaruan}
           onValueChange={res => setValueKeterbaruan(res)}
+          isActive={keterbaruanActiveStatus}
+          onCbPress={res => setKeterbaruanActiveStatus(res)}
         />
         <Gap height={8} />
         <CardSlideSingleValueSetter
           title="Trending"
           value={valueTrending}
           onValueChange={res => setValueTrending(res)}
+          isActive={trendingActiveStatus}
+          onCbPress={res => setTrendingActiveStatus(res)}
         />
         <CardSlideSingleValueSetter
           tingkatHierarki={1}
           title="Jumlah Like"
           value={valueLike}
           onValueChange={res => setValueLike(res)}
+          isActive={jumLikeActiveStatus}
+          onCbPress={res => setJumLikeActiveStatus(res)}
         />
         <CardSlideSingleValueSetter
           tingkatHierarki={1}
           title="Jumlah Komentar"
           value={valueComment}
           onValueChange={res => setValueComment(res)}
+          isActive={jumKomentarActiveStatus}
+          onCbPress={res => setJumKomentarActiveStatus(res)}
         />
         <CardSlideSingleValueSetter
           tingkatHierarki={1}
           title="Bounce Rate"
           value={valueBounceRate}
           onValueChange={res => setValueBounceRate(res)}
+          isActive={bounceRateActiveStatus}
+          onCbPress={res => setBounceRateActiveStatus(res)}
         />
         <Gap height={8} />
         <CardSlideSingleValueSetter
           title="Profil Kreator"
           value={valueProfilKreator}
           onValueChange={res => setValueProfilKreator(res)}
+          isActive={profilKreatorActiveStatus}
+          onCbPress={res => setProfilKreatorActiveStatus(res)}
         />
         <CardSlideSingleValueSetter
           tingkatHierarki={1}
           title="Jumlah Ide"
           value={valueJumlahIde}
           onValueChange={res => setValueJumlahIde(res)}
+          isActive={jumIdeActiveStatus}
+          onCbPress={res => setJumIdeActiveStatus(res)}
         />
         <CardSlideSingleValueSetter
           tingkatHierarki={1}
           title="Perolehan Like"
           value={valuePerolehanLike}
           onValueChange={res => setValuePerolehanLike(res)}
+          isActive={perLikeActiveStatus}
+          onCbPress={res => setPerLikeActiveStatus(res)}
         />
         <CardSlideSingleValueSetter
           tingkatHierarki={1}
           title="Perolehan Komentar"
           value={valuePerolehanKomentar}
           onValueChange={res => setValuePerolehanKomentar(res)}
+          isActive={perKomentarActiveStatus}
+          onCbPress={res => setPerKomentarActiveStatus(res)}
         />
         <CardSlideSingleValueSetter
           tingkatHierarki={1}
           title="Jumlah Achievement"
           value={valueJumlahAchievement}
           onValueChange={res => setValueJumlahAchievement(res)}
+          isActive={jumAchievementActiveStatus}
+          onCbPress={res => setJumAchievementActiveStatus(res)}
         />
         <Gap height={8} />
         <CardSlideSingleValueSetter
           title="Lean Canvas"
           value={valueLeanCanvas}
           onValueChange={res => setValueLeanCanvas(res)}
+          isActive={leanCanvasActiveStatus}
+          onCbPress={res => setLeanCanvasActiveStatus(res)}
         />
         <CardSlideSingleValueSetter
           tingkatHierarki={1}
           title="Customer"
           value={valueCustomer}
           onValueChange={res => setValueCustomer(res)}
+          isActive={customerActiveStatus}
+          onCbPress={res => setCustomerActiveStatus(res)}
         />
         <CardSlideSingleValueSetter
           tingkatHierarki={1}
           title="Problem"
           value={valueProblem}
           onValueChange={res => setValueProblem(res)}
+          isActive={problemActiveStatus}
+          onCbPress={res => setProblemActiveStatus(res)}
         />
         <CardSlideSingleValueSetter
           tingkatHierarki={1}
           title="Early Adopter"
           value={valueEarlyAdopter}
           onValueChange={res => setValueEarlyAdopter(res)}
+          isActive={earlyAdopterActiveStatus}
+          onCbPress={res => setEarlyAdopterActiveStatus(res)}
         />
         <CardSlideSingleValueSetter
           tingkatHierarki={1}
           title="Existing Solution"
           value={valueExistingSolution}
           onValueChange={res => setValueExistingSolution(res)}
+          isActive={existingSolutionActiveStatus}
+          onCbPress={res => setExistingSolutionActiveStatus(res)}
         />
         <CardSlideSingleValueSetter
           tingkatHierarki={1}
           title="Unique Value"
           value={valueUniqueValue}
           onValueChange={res => setValueUniqueValue(res)}
+          isActive={uniqueValueActiveStatus}
+          onCbPress={res => setUniqueValueActiveStatus(res)}
         />
         <CardSlideSingleValueSetter
           tingkatHierarki={1}
           title="Proposed Solution"
           value={valueProposedSolution}
           onValueChange={res => setValueProposedSolution(res)}
+          isActive={proposedSolutionActiveStatus}
+          onCbPress={res => setProposedSolutionActiveStatus(res)}
         />
         <Gap height={8} />
         <CardSlideSingleValueSetter
           title="Jumlah Team"
           value={valueJumlahTeam}
           onValueChange={res => setValueJumlahTeam(res)}
+          isActive={teamActiveStatus}
+          onCbPress={res => setTeamActiveStatus(res)}
         />
         <Gap height={8} />
         <CardSlideSingleValueSetter
           title="Jumlah Attachment"
           value={valueJumlahAttachment}
           onValueChange={res => setValueJumlahAttachment(res)}
+          isActive={attachmentActiveStatus}
+          onCbPress={res => setAttachmentActiveStatus(res)}
         />
-        <Gap height={30} />
+        <Gap height={25} />
+        {isKonsisten !== null && isKonsisten !== undefined && (
+          <>
+            <Text
+              style={{
+                fontFamily: fonts.secondary[500],
+                fontSize: 15,
+                color: isKonsisten ? colors.success : colors.reject,
+              }}>
+              {isKonsisten ? `Consistent Statement` : `Inconsistent Statement`}
+            </Text>
+            <Text
+              style={{
+                fontFamily: fonts.secondary[500],
+                fontSize: 15,
+                color: isKonsisten ? colors.success : colors.reject,
+              }}>
+              {`CR = ${indikatorKonsisten}`}
+            </Text>
+            <Gap height={16} />
+          </>
+        )}
         <View
           style={{
             flexDirection: 'row',
@@ -443,8 +574,8 @@ const CriteriaPreferenceSetter = ({navigation, route}) => {
           <TouchableOpacity
             onPress={() => {
               criteriaIteration(true);
+              // iteratingTimeTest(true);
             }}
-            // onLongPress={() => iteratingTimeTest(true)}
             disabled={!validatingValue()}
             style={{
               flex: 1,
@@ -468,8 +599,8 @@ const CriteriaPreferenceSetter = ({navigation, route}) => {
           <TouchableOpacity
             onPress={() => {
               criteriaIteration(false);
+              // iteratingTimeTest(false);
             }}
-            // onLongPress={() => iteratingTimeTest(false)}
             disabled={!validatingValue()}
             style={{
               flex: 1,
@@ -499,14 +630,16 @@ const CriteriaPreferenceSetter = ({navigation, route}) => {
               newIdeaDataList: rangkingResult,
             });
           }}
-          disabled={rangkingResult === null}
+          disabled={rangkingResult === null || !isKonsisten}
           style={{
             flex: 1,
             padding: 10,
             borderRadius: 8,
             alignItems: 'center',
             backgroundColor:
-              rangkingResult !== null ? colors.success : colors.divider,
+              rangkingResult !== null && isKonsisten
+                ? colors.success
+                : colors.divider,
           }}>
           <Text
             style={{

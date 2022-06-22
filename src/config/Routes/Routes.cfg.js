@@ -22,9 +22,10 @@ import TalentApproval from '../../modules/talentapproval/screen/TalentApproval.s
 import TalentApprovalAction from '../../modules/talentapproval/screen/TalentApprovalAction.screen';
 import TermCondi from '../../modules/termcondi/screen/TermCondi.screen';
 import CriteriaManagement from '../../modules/administrator/screen/CriteriaManagement.screen';
-import PromotionManagement from '../../modules/administrator/screen/PromotionManagement';
+import PromotionManagement from '../../modules/administrator/screen/PromotionManagement.screen';
 import CriteriaPreferenceSetter from '../../modules/administrator/screen/CriteriaPreferenceSetter.screen';
 import ResultRank from '../../modules/administrator/screen/ResultRank.screen';
+import CriteriaPreferenceSetterDefault from '../../modules/administrator/screen/CriteriaPreferenceSetterDefault.screen';
 
 const Stack = createNativeStackNavigator();
 
@@ -126,6 +127,11 @@ const Routes = () => {
       <Stack.Screen
         name="PromotionManagement"
         component={PromotionManagement}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="CriteriaPreferenceSetterDefault"
+        component={CriteriaPreferenceSetterDefault}
         options={{headerShown: false}}
       />
       <Stack.Screen

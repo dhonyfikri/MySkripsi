@@ -24,7 +24,6 @@ import {
   removeAsyncStorageItem,
 } from '../../../utils/AsyncStorage/StoreAsyncStorage';
 import {colors} from '../../../utils/ColorsConfig/Colors';
-import {dateToText} from '../../../utils/DateConfig/DateConvert';
 import fonts from '../../../utils/FontsConfig/Fonts';
 
 const Profile = ({navigation, route}) => {
@@ -97,7 +96,28 @@ const Profile = ({navigation, route}) => {
     }
     GetIdeasAPI(route.params?.userToken?.authToken).then(res => {
       if (res.status === 'SUCCESS') {
-        setIdeaData(res.data);
+        getAsyncStorageObject('@PELENGKAP_DATA_IDEA').then(
+          dataPelengkapIdea => {
+            let fixListIdea = [];
+            res.data.map(idea => {
+              const dataPasanganPelengkap = dataPelengkapIdea.filter(
+                itemPasangan => itemPasangan.ideaId.toString() === idea.id,
+              )[0];
+              let tempItem = idea;
+              if (dataPasanganPelengkap) {
+                tempItem.desc[2].value = dataPasanganPelengkap.cover;
+                tempItem = {
+                  ...tempItem,
+                  teams: dataPasanganPelengkap.teams,
+                  createdDate: dataPasanganPelengkap.createdDate,
+                  updatedDate: dataPasanganPelengkap.updatedDate,
+                };
+              }
+              fixListIdea.push(tempItem);
+            });
+            setIdeaData(fixListIdea);
+          },
+        );
       } else if (
         res.status === 'SOMETHING_WRONG' ||
         res.status === 'NOT_FOUND' ||
@@ -343,9 +363,9 @@ const Profile = ({navigation, route}) => {
               itemTitle: 'FAQ',
               // onPress: () => console.log('FAQ Clicked'),
               onPress: () => {
-                getAsyncStorageObject('@PROMOTION_DATA').then(res =>
-                  console.log(res),
-                );
+                // getAsyncStorageObject('@PROMOTION_DATA').then(res =>
+                //   console.log(res),
+                // );
               },
             }}
           />

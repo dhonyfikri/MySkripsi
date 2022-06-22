@@ -125,8 +125,6 @@ const DetailIdeaScreen = ({navigation, route}) => {
     });
   }
 
-  console.log(ideaData?.approval);
-
   const likeStatus =
     ideaData?.like?.filter(item => item.createdBy === decodedJwt.data.id)
       .length > 0;

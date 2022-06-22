@@ -30,6 +30,7 @@ import {ApiGatewayBaseUrl} from '../../../config/Environment.cfg';
 import {useBackHandler} from '@react-native-community/hooks';
 import {
   getAsyncStorageObject,
+  storeAsyncStorage,
   storeAsyncStorageObject,
 } from '../../../utils/AsyncStorage/StoreAsyncStorage';
 
@@ -216,11 +217,21 @@ const SubmittedIdea = ({navigation, route}) => {
                 item => item.ideaId !== selectedIdea.ideaId,
               ),
             ).then(() => {
-              setModalDeleteIdeaVisible(false);
-              setSelectedIdea(null);
-              setDeleteIdeaMessage('');
-              setMessageSuccessDeleteIdeaModalVisible(true);
-              setChanged();
+              getAsyncStorageObject('@PROMOTION_DATA').then(dataPromotion => {
+                storeAsyncStorage(
+                  '@PROMOTION_DATA',
+                  dataPromotion.filter(
+                    promotionItem =>
+                      promotionItem.ideaId !== selectedIdea.ideaId,
+                  ),
+                ).then(() => {
+                  setModalDeleteIdeaVisible(false);
+                  setSelectedIdea(null);
+                  setDeleteIdeaMessage('');
+                  setMessageSuccessDeleteIdeaModalVisible(true);
+                  setChanged();
+                });
+              });
             });
           },
         );

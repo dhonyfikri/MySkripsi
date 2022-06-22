@@ -151,6 +151,9 @@ const TabNavigation = ({navigation, route}) => {
           <Tab.Screen
             name="Events"
             component={Event}
+            initialParams={{
+              userToken: route.params?.userToken,
+            }}
             options={{
               headerShown: false,
               tabBarIcon: ({focused}) => (
@@ -193,6 +196,9 @@ const TabNavigation = ({navigation, route}) => {
           <Tab.Screen
             name="Dashboard"
             component={DashboardPage}
+            initialParams={{
+              userToken: route.params?.userToken,
+            }}
             options={{
               headerShown: false,
               tabBarIcon: ({focused}) => (
