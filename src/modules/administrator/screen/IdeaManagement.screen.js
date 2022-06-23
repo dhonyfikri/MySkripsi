@@ -184,11 +184,21 @@ const IdeaManagement = ({navigation, route}) => {
                 item => item.ideaId !== selectedIdea.ideaId,
               ),
             ).then(() => {
-              setModalDeleteIdeaVisible(false);
-              setSelectedIdea(null);
-              setDeleteIdeaMessage('');
-              setMessageSuccessDeleteIdeaModalVisible(true);
-              setChanged();
+              getAsyncStorageObject('@PROMOTION_DATA').then(dataPromotion => {
+                storeAsyncStorageObject(
+                  '@PROMOTION_DATA',
+                  dataPromotion.filter(
+                    promotionItem =>
+                      promotionItem.ideaId !== selectedIdea.ideaId,
+                  ),
+                ).then(() => {
+                  setModalDeleteIdeaVisible(false);
+                  setSelectedIdea(null);
+                  setDeleteIdeaMessage('');
+                  setMessageSuccessDeleteIdeaModalVisible(true);
+                  setChanged();
+                });
+              });
             });
           },
         );

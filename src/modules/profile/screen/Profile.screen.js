@@ -363,9 +363,9 @@ const Profile = ({navigation, route}) => {
               itemTitle: 'FAQ',
               // onPress: () => console.log('FAQ Clicked'),
               onPress: () => {
-                // getAsyncStorageObject('@PROMOTION_DATA').then(res =>
-                //   console.log(res),
-                // );
+                getAsyncStorageObject('@PROMOTION_DATA').then(res =>
+                  console.log(res),
+                );
               },
             }}
           />

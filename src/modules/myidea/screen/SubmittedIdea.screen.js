@@ -218,7 +218,7 @@ const SubmittedIdea = ({navigation, route}) => {
               ),
             ).then(() => {
               getAsyncStorageObject('@PROMOTION_DATA').then(dataPromotion => {
-                storeAsyncStorage(
+                storeAsyncStorageObject(
                   '@PROMOTION_DATA',
                   dataPromotion.filter(
                     promotionItem =>
