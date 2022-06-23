@@ -187,8 +187,8 @@ const CreateIdeaDescription = ({
 
       <BoardTextInput
         text={ideaDesc}
-        placeholder="(Max. 1006 Characters)"
-        maxLength={600}
+        placeholder="(Max. 1000 Characters)"
+        maxLength={1000}
         height={155}
         onChangeText={text => {
           onIdeaDescChange(text);

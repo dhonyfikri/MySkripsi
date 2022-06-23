@@ -209,7 +209,7 @@ const CreateIdeaDescription = ({
       <TextInput
         multiline
         placeholder="(Max. 60 Characters)"
-        maxLength={60}
+        maxLength={1000}
         textAlignVertical="top"
         autoComplete="off"
         autoCorrect={false}

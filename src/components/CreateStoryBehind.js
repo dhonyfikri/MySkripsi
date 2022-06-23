@@ -41,8 +41,8 @@ const CreateStoryBehind = ({
       </Text>
       <TextInput
         multiline
-        placeholder="(Max. 100 Characters)"
-        maxLength={100}
+        placeholder="(Max. 1000 Characters)"
+        maxLength={1000}
         textAlignVertical="top"
         autoComplete="off"
         autoCorrect={false}
@@ -59,8 +59,8 @@ const CreateStoryBehind = ({
       </Text>
       <TextInput
         multiline
-        placeholder="(Max. 100 Characters)"
-        maxLength={100}
+        placeholder="(Max. 1000 Characters)"
+        maxLength={1000}
         textAlignVertical="top"
         autoComplete="off"
         autoCorrect={false}
@@ -76,8 +76,8 @@ const CreateStoryBehind = ({
       </Text>
       <TextInput
         multiline
-        placeholder="(Max. 100 Characters)"
-        maxLength={100}
+        placeholder="(Max. 1000 Characters)"
+        maxLength={1000}
         textAlignVertical="top"
         autoComplete="off"
         autoCorrect={false}

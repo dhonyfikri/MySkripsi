@@ -133,8 +133,8 @@ const CreateAdditionalAttachmentField = ({
       <TextInput
         multiline
         editable={valueDropdownType === null ? false : true}
-        placeholder="(Max. 600 Characters)"
-        maxLength={600}
+        placeholder="(Max. 1000 Characters)"
+        maxLength={1000}
         textAlignVertical="top"
         autoComplete="off"
         autoCorrect={false}

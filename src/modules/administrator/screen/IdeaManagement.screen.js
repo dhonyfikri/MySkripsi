@@ -18,7 +18,7 @@ import Gap from '../../../components/Gap';
 import Header from '../../../components/Header';
 import ModalAction from '../../../components/ModalAction';
 import {colors} from '../../../utils/ColorsConfig/Colors';
-import {textToDate} from '../../../utils/DateConfig/DateConvert';
+import {dateToText, textToDate} from '../../../utils/DateConfig/DateConvert';
 import fonts from '../../../utils/FontsConfig/Fonts';
 import ModalMessage from '../../../components/ModalMessage';
 import LoadingProcessFull from '../../../components/LoadingProcessFull';
@@ -111,49 +111,77 @@ const IdeaManagement = ({navigation, route}) => {
           listGetUserRequest.push(request(item));
         });
 
-        axios
-          .all(listGetUserRequest)
-          .then(
-            axios.spread((...responses) => {
-              responses.map(item => {
-                if (item.data.data.length > 0) {
-                  listUser.push(item.data.data[0]);
-                }
+        getAsyncStorageObject('@PELENGKAP_DATA_USER').then(
+          resPelengkapDataUser => {
+            axios
+              .all(listGetUserRequest)
+              .then(
+                axios.spread((...responses) => {
+                  responses.map(item => {
+                    if (item.data.data.length > 0) {
+                      listUser.push({
+                        ...item.data.data[0],
+                        ...resPelengkapDataUser?.filter(
+                          itemPelengkap =>
+                            itemPelengkap.id === item.data.data[0].id,
+                        )[0],
+                        bio: item.data.data[0]?.bio,
+                      });
+                    }
+                  });
+                  // console.log(listUser);
+                  getAsyncStorageObject('@PELENGKAP_DATA_IDEA').then(
+                    dataPelengkapIdea => {
+                      res.data.map(item => {
+                        const dataPasanganPelengkap = dataPelengkapIdea.filter(
+                          itemPasangan =>
+                            itemPasangan.ideaId.toString() === item.id,
+                        )[0];
+                        let tempItem = item;
+                        if (dataPasanganPelengkap) {
+                          tempItem.desc[2].value = dataPasanganPelengkap.cover;
+                          tempItem = {
+                            ...tempItem,
+                            teams: dataPasanganPelengkap.teams,
+                            createdDate: dataPasanganPelengkap.createdDate,
+                            updatedDate: dataPasanganPelengkap.updatedDate,
+                          };
+                        }
+                        listUser.map(item => {
+                          if (item.id === tempItem.createdBy) {
+                            tempItem.user = item;
+                          }
+                        });
+                        fixResult.push(tempItem);
+                      });
+                      // ini hanya berupa data singkat untuk card idea list
+                      let fixSubmittedAllIdea = [];
+                      fixResult.map(item => {
+                        fixSubmittedAllIdea.push({
+                          ideaId: item.id,
+                          ideaName: item.desc[0].value,
+                          allowJoin: item.allowJoin,
+                          ownerId: item.createdBy,
+                          ownerName: item.user.name,
+                          createdDate: dateToText(
+                            textToDate(item.createdDate, 'dash'),
+                          ),
+                        });
+                      });
+                      setSubmittedAllIdea(fixSubmittedAllIdea);
+                      setListUserData(listUser);
+                      setLoading({...loading, visible: false});
+                    },
+                  );
+                }),
+              )
+              .catch(errors => {
+                setLoading({...loading, visible: false});
+                setShowRefreshButton(true);
+                console.log(errors);
               });
-              // console.log(listUser);
-              res.data.map(item => {
-                const tempItem = item;
-                listUser.map(item => {
-                  if (item.id === tempItem.createdBy) {
-                    tempItem.user = item;
-                  }
-                });
-                fixResult.push(tempItem);
-              });
-              // ini hanya berupa data singkat untuk card idea list
-              let fixSubmittedAllIdea = [];
-              fixResult.map(item => {
-                fixSubmittedAllIdea.push({
-                  ideaId: item.id,
-                  ideaName: item.desc[0].value,
-                  allowJoin: item.allowJoin,
-                  ownerId: item.createdBy,
-                  ownerName: item.user.name,
-                  createdDate: `${
-                    (item.desc[0].value.length % 29) + 1
-                  }/05/2022, 12:00:01`,
-                });
-              });
-              setSubmittedAllIdea(fixSubmittedAllIdea);
-              setListUserData(listUser);
-              setLoading({...loading, visible: false});
-            }),
-          )
-          .catch(errors => {
-            setLoading({...loading, visible: false});
-            setShowRefreshButton(true);
-            console.log(errors);
-          });
+          },
+        );
       } else if (
         res.status === 'SOMETHING_WRONG' ||
         res.status === 'NOT_FOUND' ||
