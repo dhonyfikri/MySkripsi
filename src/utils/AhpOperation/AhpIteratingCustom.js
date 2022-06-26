@@ -19,11 +19,12 @@ const ahpIteratingCustom = (criteria = [], activeStatus) => {
   kriteria.map(item => {
     totalNilaiKriteria += item;
   });
-  const pengaliKonvert = 8 / totalNilaiKriteria;
+  const pengaliKonvert = 8 / totalNilaiKriteria; //ini akumulasi semuanya
 
   let iterasiArray = kriteria.map((item1, index1) => {
     return kriteria.map((item2, index2) => {
       let cellValue = item1 - item2;
+      // const pengaliKonvert = 8 / (item1 + item2); //ini akumulasi perbandingan cell
       if (cellValue >= 0) {
         cellValue = (item1 - item2) * pengaliKonvert + 1;
       } else {
@@ -32,6 +33,8 @@ const ahpIteratingCustom = (criteria = [], activeStatus) => {
       return cellValue;
     });
   });
+
+  console.log(iterasiArray);
 
   let total = new Array(kriteria.length).fill(0);
   iterasiArray.map((item1, index1) => {

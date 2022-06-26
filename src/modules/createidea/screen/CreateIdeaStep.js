@@ -370,13 +370,17 @@ const CreateIdeaStep = ({navigation, route}) => {
   };
 
   const goHomeAndRefresh = () => {
-    navigation.navigate('TabNavigation', {
-      screen: 'Home',
-      params: {
-        userToken: route.params?.userToken,
-        refresh: {status: true},
+    navigation.navigate(
+      'TabNavigation',
+      {userToken: route.params?.userToken},
+      {
+        screen: 'Home',
+        params: {
+          userToken: route.params?.userToken,
+          refresh: {status: true},
+        },
       },
-    });
+    );
   };
 
   useBackHandler(() => {

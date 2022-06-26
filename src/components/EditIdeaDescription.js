@@ -17,6 +17,7 @@ import {
 import SwipeButton from '../components/SwipeButton';
 import {colors} from '../utils/ColorsConfig/Colors';
 import fonts from '../utils/FontsConfig/Fonts';
+import {IdeaCategory} from '../utils/SupportData/SupportData';
 import BoardTextInput from './BoardTextInput';
 import CardCreateIdeaSession from './CardCreateIdeaSession';
 import Gap from './Gap';
@@ -38,10 +39,8 @@ const CreateIdeaDescription = ({
     useState(false);
   const [valueDropdownIdeaCategory, setValueDropdownIdeaCategory] =
     useState(ideaCategory);
-  const [itemsDropdownIdeaCategory, setItemsDropdownIdeaCategory] = useState([
-    {label: 'Lingkungan', value: '1'},
-    {label: 'Social Colaboration', value: '2'},
-  ]);
+  const [itemsDropdownIdeaCategory, setItemsDropdownIdeaCategory] =
+    useState(IdeaCategory);
 
   const takeCoverPhotoFromLibrary = () => {
     ImageCropPicker.openPicker({

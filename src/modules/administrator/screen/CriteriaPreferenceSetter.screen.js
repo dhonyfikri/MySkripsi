@@ -98,6 +98,7 @@ const CriteriaPreferenceSetter = ({navigation, route}) => {
         valueLeanCanvas,
         valueJumlahTeam,
         valueJumlahAttachment,
+        // 1, 0, 0,
       ],
       [
         keterbaruanActiveStatus,
@@ -106,10 +107,13 @@ const CriteriaPreferenceSetter = ({navigation, route}) => {
         leanCanvasActiveStatus,
         teamActiveStatus,
         attachmentActiveStatus,
+        // true,
+        // true,
+        // true,
       ],
     );
 
-    // console.log(rataRata.rataRata);
+    console.log(rataRata.rataRata);
     // console.log(rataRata.consistentValue);
     // console.log(rataRata.konsisten);
 
@@ -560,7 +564,9 @@ const CriteriaPreferenceSetter = ({navigation, route}) => {
           isActive={attachmentActiveStatus}
           onCbPress={res => setAttachmentActiveStatus(res)}
         />
-        <Gap height={25} />
+        {/* <Gap height={25} /> */}
+      </ScrollView>
+      <View style={{padding: 16}}>
         {isKonsisten !== null && isKonsisten !== undefined && (
           <>
             <Text
@@ -649,7 +655,6 @@ const CriteriaPreferenceSetter = ({navigation, route}) => {
           }}
           disabled={rangkingResult === null || !isKonsisten}
           style={{
-            flex: 1,
             padding: 10,
             borderRadius: 8,
             alignItems: 'center',
@@ -667,7 +672,7 @@ const CriteriaPreferenceSetter = ({navigation, route}) => {
             View Result
           </Text>
         </TouchableOpacity>
-      </ScrollView>
+      </View>
       <LoadingProcessFull visible={loading.visible} message={loading.message} />
     </View>
   );

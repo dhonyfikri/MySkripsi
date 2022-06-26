@@ -358,6 +358,7 @@ const CriteriaPreferenceSetterDefault = ({navigation, route}) => {
       />
       <ScrollView
         showsVerticalScrollIndicator={false}
+        style={{flex: 1}}
         contentContainerStyle={{padding: 16}}>
         <Text>Main Criteria</Text>
         <Gap height={8} />
@@ -663,7 +664,9 @@ const CriteriaPreferenceSetterDefault = ({navigation, route}) => {
           value={valueUniqueValueToProposedSolution}
           onValueChange={res => setValueUniqueValueToProposedSolution(res)}
         />
-        <Gap height={25} />
+        {/* <Gap height={25} /> */}
+      </ScrollView>
+      <View style={{padding: 16}}>
         {isKonsisten !== null && isKonsisten !== undefined && (
           <>
             <Text
@@ -746,7 +749,6 @@ const CriteriaPreferenceSetterDefault = ({navigation, route}) => {
           }}
           disabled={rangkingResult === null || !isKonsisten}
           style={{
-            flex: 1,
             padding: 10,
             borderRadius: 8,
             alignItems: 'center',
@@ -764,7 +766,7 @@ const CriteriaPreferenceSetterDefault = ({navigation, route}) => {
             View Result
           </Text>
         </TouchableOpacity>
-      </ScrollView>
+      </View>
       <LoadingProcessFull visible={loading.visible} message={loading.message} />
     </View>
   );
